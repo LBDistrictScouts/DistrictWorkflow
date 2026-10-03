@@ -1,0 +1,41 @@
+{
+  "name": "district-workflow-temporal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Temporal worker and workflows for DistrictWorkflow",
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
+  "scripts": {
+    "server": "mkdir -p .data && .bin/temporal server start-dev --ip 127.0.0.1 --db-filename .data/temporal.db",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/worker.ts",
+    "start": "node dist/worker.js",
+    "workflow": "tsx src/client.ts",
+    "setup:cli": "sh scripts/install-cli.sh"
+  },
+  "dependencies": {
+    "@temporalio/client": "~1.24.0",
+    "@temporalio/worker": "~1.24.0",
+    "@temporalio/workflow": "~1.24.0",
+    "dotenv": "~18.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "~24.19.1",
+    "tsx": "~4.23.15",
+    "typescript": "~5.9.3"
+  },
+  "packageManager": "yarn@4.18.1",
+  "dependenciesMeta": {
+    "@swc/core": {
+      "built": true
+    },
+    "esbuild": {
+      "built": true
+    },
+    "protobufjs": {
+      "built": true
+    }
+  }
+}
