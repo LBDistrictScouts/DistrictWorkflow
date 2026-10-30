@@ -1,0 +1,316 @@
+{
+  "id": "5439c491-30e2-4c82-aa25-c8672af19663",
+  "prevId": "790a54f4-e11b-4646-b060-bd771a2af5e5",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.training_fund_applications": {
+      "name": "training_fund_applications",
+      "schema": "",
+      "columns": {
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "training_fund_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "training_fund_status_submitted_idx": {
+          "name": "training_fund_status_submitted_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submitted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "training_fund_applications_workflow_id_unique": {
+          "name": "training_fund_applications_workflow_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "training_fund_revision_nonnegative": {
+          "name": "training_fund_revision_nonnegative",
+          "value": "\"training_fund_applications\".\"revision\" >= 0"
+        },
+        "training_fund_state_id_matches": {
+          "name": "training_fund_state_id_matches",
+          "value": "(\"training_fund_applications\".\"state\"->'application'->>'applicationId')::uuid = \"training_fund_applications\".\"application_id\""
+        },
+        "training_fund_state_status_matches": {
+          "name": "training_fund_state_status_matches",
+          "value": "\"training_fund_applications\".\"state\"->>'status' = \"training_fund_applications\".\"status\"::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.training_fund_transitions": {
+      "name": "training_fund_transitions",
+      "schema": "",
+      "columns": {
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "training_fund_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "training_fund_transitions_application_id_training_fund_applications_application_id_fk": {
+          "name": "training_fund_transitions_application_id_training_fund_applications_application_id_fk",
+          "tableFrom": "training_fund_transitions",
+          "tableTo": "training_fund_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "application_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "training_fund_transitions_application_id_revision_pk": {
+          "name": "training_fund_transitions_application_id_revision_pk",
+          "columns": [
+            "application_id",
+            "revision"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "training_fund_transition_revision_nonnegative": {
+          "name": "training_fund_transition_revision_nonnegative",
+          "value": "\"training_fund_transitions\".\"revision\" >= 0"
+        },
+        "training_fund_transition_state_id_matches": {
+          "name": "training_fund_transition_state_id_matches",
+          "value": "(\"training_fund_transitions\".\"state\"->'application'->>'applicationId')::uuid = \"training_fund_transitions\".\"application_id\""
+        },
+        "training_fund_transition_state_status_matches": {
+          "name": "training_fund_transition_state_status_matches",
+          "value": "\"training_fund_transitions\".\"state\"->>'status' = \"training_fund_transitions\".\"status\"::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_emails": {
+      "name": "user_emails",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "user_emails_email_idx": {
+          "name": "user_emails_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_emails_user_id_users_id_fk": {
+          "name": "user_emails_user_id_users_id_fk",
+          "tableFrom": "user_emails",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_emails_user_id_email_pk": {
+          "name": "user_emails_user_id_email_pk",
+          "columns": [
+            "user_id",
+            "email"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "synced_at": {
+          "name": "synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.training_fund_status": {
+      "name": "training_fund_status",
+      "schema": "public",
+      "values": [
+        "awaiting_approvals",
+        "awaiting_payment",
+        "paid"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

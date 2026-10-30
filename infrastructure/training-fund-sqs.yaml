@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: District Training Fund intake queue and dead-letter queue
+Resources:
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+  ApplicationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 20
+      VisibilityTimeout: 120
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 5
+Outputs:
+  QueueUrl:
+    Value: !Ref ApplicationQueue
+  QueueArn:
+    Value: !GetAtt ApplicationQueue.Arn
+  DeadLetterQueueUrl:
+    Value: !Ref DeadLetterQueue

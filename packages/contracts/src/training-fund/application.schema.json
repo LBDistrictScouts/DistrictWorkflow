@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:lba:training-fund:application:1.0",
+  "title": "District Training Fund application",
+  "description": "The raw JSON body of an SQS message. Money is GBP in integer pence. Do not include bank details. applicationId must remain unchanged when retrying the same submission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "type",
+    "applicationId",
+    "submittedAt",
+    "applicant",
+    "course",
+    "funding",
+    "declaration"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "type": {
+      "const": "district.training-fund.application"
+    },
+    "applicationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "applicant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "email",
+        "group",
+        "role"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/shortText"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "membershipNumber": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]{1,30}$"
+        },
+        "group": {
+          "$ref": "#/$defs/shortText"
+        },
+        "role": {
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "provider",
+        "startDate",
+        "location",
+        "costPence"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/shortText"
+        },
+        "provider": {
+          "$ref": "#/$defs/shortText"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "location": {
+          "$ref": "#/$defs/shortText"
+        },
+        "costPence": {
+          "$ref": "#/$defs/money"
+        }
+      }
+    },
+    "funding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestedPence",
+        "reason",
+        "benefit"
+      ],
+      "properties": {
+        "requestedPence": {
+          "$ref": "#/$defs/money"
+        },
+        "reason": {
+          "$ref": "#/$defs/longText"
+        },
+        "benefit": {
+          "$ref": "#/$defs/longText"
+        },
+        "otherFunding": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "declaration": {
+      "const": true
+    },
+    "submission": {
+      "description": "Trusted producer provenance. Omitted for legacy v1.0 messages. Staff identity is derived from the authenticated server session, never from browser input.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "channel"
+          ],
+          "properties": {
+            "channel": {
+              "const": "members"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "channel",
+            "receivedVia",
+            "receivedAt",
+            "reference",
+            "registeredBy",
+            "registeredAt"
+          ],
+          "properties": {
+            "channel": {
+              "const": "staff"
+            },
+            "receivedVia": {
+              "enum": [
+                "email",
+                "phone",
+                "post",
+                "other"
+              ]
+            },
+            "receivedAt": {
+              "type": "string",
+              "format": "date"
+            },
+            "reference": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
+            },
+            "registeredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "registeredBy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/$defs/shortText"
+                },
+                "name": {
+                  "$ref": "#/$defs/shortText"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "shortText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S"
+    },
+    "longText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "pattern": "\\S"
+    },
+    "money": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000000
+    }
+  }
+}

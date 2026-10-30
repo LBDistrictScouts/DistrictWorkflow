@@ -1,0 +1,31 @@
+{
+  "name": "district-workflow",
+  "private": true,
+  "packageManager": "yarn@4.18.1",
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:packages": "yarn workspace @district/contracts build && yarn workspace @district/domain build && yarn workspace @district/application build && yarn workspace @district/persistence build && yarn workspace @district/integrations build",
+    "build": "yarn build:packages && yarn workspace @district/worker build && yarn workspace @district/web build",
+    "typecheck": "yarn build:packages && yarn workspaces foreach -A --exclude district-workflow run typecheck",
+    "test": "yarn build:packages && yarn workspace @district/persistence test && yarn workspace @district/worker test",
+    "lint": "yarn workspace @district/web lint",
+    "dev:web": "yarn build:packages && yarn workspace @district/web dev",
+    "dev:worker": "yarn build:packages && yarn workspace @district/worker dev",
+    "test:integration": "yarn build && yarn workspace @district/worker test:integration",
+    "test:web": "yarn workspace @district/worker test:registration-web",
+    "db:generate": "yarn workspace @district/persistence db:generate",
+    "db:migrate": "yarn workspace @district/persistence db:migrate",
+    "db:docker:up": "docker compose -f infrastructure/compose.yaml up -d --wait postgres",
+    "db:docker:down": "docker compose -f infrastructure/compose.yaml stop postgres",
+    "db:test:docker:up": "docker compose -f infrastructure/compose.yaml --profile test up -d --wait postgres-test",
+    "db:test:docker:down": "docker compose -f infrastructure/compose.yaml --profile test stop postgres-test",
+    "dev": "bash scripts/dev.sh",
+    "dev:check": "bash scripts/dev.sh --check"
+  }
+}

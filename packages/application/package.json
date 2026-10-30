@@ -1,0 +1,23 @@
+{
+  "name": "@district/application",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@district/contracts": "workspace:*",
+    "@district/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "~24.19.1",
+    "typescript": "~5.9.3"
+  }
+}

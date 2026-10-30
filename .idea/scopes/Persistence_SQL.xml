@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Persistence SQL" pattern="file:packages/persistence//*" />
+</component>

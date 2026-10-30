@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: district_workflow
+      POSTGRES_USER: district
+      POSTGRES_PASSWORD: local-development-only
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - application_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U district -d district_workflow']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  postgres-test:
+    image: postgres:17-alpine
+    profiles: ['test']
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: district_test
+      POSTGRES_PASSWORD: test-only
+    ports:
+      - '127.0.0.1:${POSTGRES_TEST_PORT:-55432}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U district_test -d postgres']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  application_postgres:

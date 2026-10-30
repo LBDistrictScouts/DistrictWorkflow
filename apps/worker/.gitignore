@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.bin/
+.data/
+.env
+*.log
+.yarn/
+
+# Real notification recipients
+training-fund.routing.json

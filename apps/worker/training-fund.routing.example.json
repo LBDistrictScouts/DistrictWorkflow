@@ -1,0 +1,8 @@
+{
+  "approvers": [
+    { "id": "reviewer-1", "name": "First reviewer", "email": "reviewer-1@example.org" },
+    { "id": "reviewer-2", "name": "Second reviewer", "email": "reviewer-2@example.org" },
+    { "id": "reviewer-3", "name": "Third reviewer", "email": "reviewer-3@example.org" }
+  ],
+  "treasurer": { "id": "treasurer", "name": "District Treasurer", "email": "treasurer@example.org" }
+}

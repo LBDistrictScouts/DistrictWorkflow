@@ -1,0 +1,21 @@
+flowchart TD
+    A[TSA National Email Enquiry] -->|Ingest Email| C(Validate Signature)
+    B[LBA Website Application] -->|Web Form| C
+    C --> E{Check if Duplicate}
+    E -->|Duplicate| F{Check is in Scouting}
+    E -->|New| G(Determine Section)
+    F -->|Not in Scouting| G
+    F -->|In Scouting| H((End))
+    G --> I{Has Weekly Availability}
+    I -->|Availability Known| J(Determine Sort Order)
+    I -->|Availability Unknown| K(Send Email to determine availability)
+    K --> J
+    J -->|Send Email| L(Offer YP to Leaders)
+    L --> M{Leader Response}
+    M -->|Leader Accepts| N(Import into OSM)
+    M -->|Leader Rejects| O(Next Section in Ordered List)
+    O --> L
+    N --> P(Create Transfer)
+    P --> Q{Await Transfer}
+    Q --> R(Record Outcome)
+    R --> S((End))
