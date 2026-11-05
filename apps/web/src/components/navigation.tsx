@@ -9,7 +9,6 @@ const links = [
   { href: "/", label: "Overview" },
   { href: "/workflows", label: "Workflows" },
   { href: "/actions", label: "Actions" },
-  { href: "/help", label: "Help & guidance" },
 ];
 
 export default function Navigation({ account }: { account: ReactNode }) {
@@ -21,6 +20,7 @@ export default function Navigation({ account }: { account: ReactNode }) {
     const current = root.dataset.theme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const theme = current === "dark" ? "light" : "dark";
     root.dataset.theme = theme;
+
     try { localStorage.setItem("district-workflow-theme", theme); } catch { /* Theme still works when storage is unavailable. */ }
   }
 

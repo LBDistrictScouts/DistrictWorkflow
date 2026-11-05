@@ -1,7 +1,14 @@
 # District Training Fund
 
+The full agreed process definition is in
+[`packages/domain/src/training-fund/machine.ts`](../packages/domain/src/training-fund/machine.ts)
+and is displayed on the workflow pages. See the [process revision](training-fund-process.md)
+for rejection, bank-details and appeal steps. Those steps still require runtime
+integration; the operating instructions below describe the current compatibility
+workflow, whose definition is `runtime-machine.ts`.
+
 An application starts in the members website or is registered by workflow staff,
-enters through SQS, waits for each of three assigned people to
+enters through SQS, waits for two of three assigned people to
 approve, then becomes a payment task for a separate district treasurer. Recording
 payment completes the workflow. No bank transfer is initiated by this application.
 
@@ -14,7 +21,7 @@ flowchart LR
   W --> A[Reviewer 1]
   W --> B[Reviewer 2]
   W --> C[Reviewer 3]
-  A --> ALL{All three approved?}
+  A --> ALL{Two of three approved?}
   B --> ALL
   C --> ALL
   ALL -->|Yes| T[Treasurer payment task]
@@ -55,8 +62,9 @@ accepts the message. This means *queued*, not already approved or paid.
 Set `MEMBERS_SESSION_URL` and `MEMBERS_SESSION_COOKIE_NAME` to the existing
 members validator and cookie. The validator must return HTTP 200 with
 `{ "authenticated": true }`. Unconfigured, expired and unavailable sessions fail
-closed. Applicant contact details are self-declared; the existing validator returns
-membership access, not a verified applicant identity.
+closed. The member-session validator supplies access, not applicant identity. New frontend
+submissions select a directory member UUID; the server resolves contact details
+as described under Directory-backed applicant selection below.
 
 The existing `district-site` checkout is unchanged. To expose this form inside that
 members site, route the form and its API through the same protected members origin
@@ -129,8 +137,9 @@ The application service derives the acting person from the signed token, never a
 and checks assignment and state. Direct Temporal access is a privileged admin
 boundary and must be secured separately.
 
-A repeated approval counts once. The three tasks can complete in any order. No
-majority shortcut or automatic approval exists. When all approve, the workflow
+A repeated approval counts once. Each reviewer has a personal task link into one
+shared approval stage. After two distinct reviewers approve, the remaining review
+is no longer required and disappears from outstanding actions. The workflow
 sends the treasurer a task. The treasurer arranges payment through the existing
 process, then enters its reference and date. Other reviewers cannot record payment.
 No rejection, delegation, reminders or award-amount changes are included yet.
@@ -206,7 +215,7 @@ the received date and a correspondence reference. They must confirm that the
 record is accurate and that the applicant agreed to sharing their details. Keep
 original correspondence in the normal records system; do not paste bank details.
 
-This route uses the same SQS intake, validation, duplicate handling, three approvals
+This route uses the same SQS intake, validation, duplicate handling, two-of-three approvals
 and treasurer task as the members website. Registering an application grants no
 approval and does not bypass review. Do not register an application a second time
 if it has already been submitted through the website; reuse its existing reference.
@@ -250,3 +259,77 @@ Training Fund task emails use the shared district-themed HTML/plain-text templat
 See [reusable activities](reusable-activities.md) for the shared sender settings,
 local preview command and SES delivery semantics. Existing `TRAINING_FUND_FROM_EMAIL`
 configuration remains supported; `NOTIFICATION_FROM_EMAIL` takes precedence.
+
+Approval quorum changes use the Temporal `training-fund-majority-v1` patch. New
+executions record `requiredApprovals: 2`. Histories started before this patch keep
+the unanimous rule for deterministic replay; absent `requiredApprovals` means all
+assigned approvers are required. Their task pages show the legacy threshold.
+
+## Local AWS testing with Moto
+
+Run `corepack yarn aws:local:up` at the repository root. This starts the pinned
+Moto server in Docker on loopback port 4566, creates the application queue and DLQ,
+and verifies a local SES sender. It updates only the ignored web/worker env files
+with local endpoints, fake AWS credentials and a shared signing key. Existing
+remote queue settings or mismatched keys are rejected instead of overwritten.
+Rerun the command after recreating the container: resources are in-memory.
+
+Restart Local Dev (`corepack yarn dev`) to load the configuration and start its
+SQS consumer. Use the Cognito-protected **Register an application** form; the member
+form still requires the separate members-session validator. Existing Cognito and
+member authentication checks remain in force. Reviewer routing defaults to the
+example addresses in `apps/worker/training-fund.routing.json`; adjust it to test
+Actions for your signed-in account. Moto captures SES messages rather than sending
+real email. Its resource dashboard is at http://localhost:4566/moto-api/.
+
+Run `corepack yarn test:aws:local` after starting Moto to test real SDK calls through
+submission, queue delivery/acknowledgment, a persisted Temporal workflow, captured
+review/payment emails, two-of-three approval and payment. This uses a disposable
+PostgreSQL database (`TEST_DATABASE_URL` in the worker env) and a temporary Temporal
+server. Stop only the emulator with `corepack yarn aws:local:down`.
+
+The container emulates AWS APIs, not IAM policy enforcement or every AWS behavior.
+Keep production IAM and cloud integration checks separately. Local SDK endpoint
+settings and fake credentials must stay out of deployed environments.
+
+## Directory-backed applicant selection
+
+Both Training Fund frontend forms now select an applicant using the authenticated
+member search (`GET /api/members/search?q=...`). Searches match active directory
+users by name or email, require at least two characters, return at most ten unique
+users, and do not expose inactive members. Select a result rather than typing
+applicant name, email, group, role or membership number.
+
+The browser submits schema version `1.1` with `applicant: { userId: '<member UUID>' }`.
+The API resolves the UUID to an active directory record with a unique contact email
+and constructs the canonical applicant snapshot `{ userId, name, email }` before
+queueing. Browser-supplied contact fields are rejected. Directory lookup failures
+are retryable service errors; missing/inactive/uncontactable selections produce a
+validation error. No free-text contact fallback is used.
+
+The ledger stores `applicant_user_id` as a foreign key to `users.id`, checked
+against the UUID in the snapshot. Contact snapshots support existing notification
+and review code; the UUID is the applicant identity. Retry deduplication ignores
+contact-snapshot changes for v1.1 applications while still rejecting a different
+member UUID or changed application details. Original snapshots remain immutable.
+Apply `0013_training_fund_applicant` before using the updated form.
+
+Legacy v1.0 queued applications and histories remain valid with their original
+name/email/group/role structure. New v1.1 submissions require the member UUID;
+group, role and membership number are no longer required on the frontend.
+
+### Reviewer resolution for new executions
+
+New Temporal executions invoke the reusable `resolveRoleUser('training-fund-approvers')`
+activity before persisting initial state or notifying reviewers. The returned users
+replace the input routing's approvers. Multiple appointment-email matches for one
+user count as one reviewer; selection uses a deterministic, unshared appointment
+email. Exactly three distinct active reviewers, separate from the treasurer, are
+required to preserve the existing two-of-three policy. Invalid resolution fails
+explicitly rather than falling back to the routing file.
+
+The treasurer still comes from `TRAINING_FUND_ROUTING_FILE`, which remains required
+by intake. Existing histories retain their recorded reviewers and approvals via
+the `training-fund-role-approvers-v1` Temporal patch. Restart the worker after
+rebuilding to enable resolution for new applications; running applications are
+not reassigned.

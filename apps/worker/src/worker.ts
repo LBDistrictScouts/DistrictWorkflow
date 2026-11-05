@@ -5,6 +5,7 @@ import { connectionOptions, namespace, taskQueue } from '@district/integrations/
 
 async function main(): Promise<void> {
   const connection = await NativeConnection.connect(connectionOptions);
+
   try {
     const worker = await Worker.create({
       connection,
@@ -13,6 +14,7 @@ async function main(): Promise<void> {
       workflowsPath: require.resolve('./workflows/index'),
       activities,
     });
+
     // The SDK handles SIGINT/SIGTERM and drains in-flight work.
     await worker.run();
   } finally {
@@ -21,7 +23,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

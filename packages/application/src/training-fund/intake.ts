@@ -3,14 +3,18 @@ import { parseApplication } from '@district/contracts/training-fund/validation';
 import { workflowIdFor } from '@district/contracts/training-fund/workflow';
 
 export interface IntakeDependencies {
+  // oxlint-disable-next-line anti-slop/no-unknown-returns -- Only completion is consumed; queue and workflow adapters return different opaque receipts.
   start(application: TrainingFundApplication, routing: TrainingFundRouting, workflowId: string): Promise<unknown>;
   alreadyRecorded?(application: TrainingFundApplication): Promise<boolean>;
-  isDuplicate(error: unknown): boolean;
+  isDuplicate(cause: unknown): boolean;
+  // oxlint-disable-next-line anti-slop/no-unknown-returns -- Only completion is consumed; queue and workflow adapters return different opaque receipts.
   acknowledge(): Promise<unknown>;
 }
+
 export async function consumeApplication(body: string, routing: TrainingFundRouting, dependencies: IntakeDependencies): Promise<'started' | 'duplicate'> {
   const application = parseApplication(JSON.parse(body));
   let outcome: 'started' | 'duplicate' = 'started';
+
   if (await dependencies.alreadyRecorded?.(application)) {
     outcome = 'duplicate';
   } else {
@@ -21,7 +25,9 @@ export async function consumeApplication(body: string, routing: TrainingFundRout
       outcome = 'duplicate';
     }
   }
+
   // Once Temporal owns the application, never hold an SQS receipt during human review.
   await dependencies.acknowledge();
+
   return outcome;
 }

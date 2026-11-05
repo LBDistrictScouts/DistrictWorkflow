@@ -18,7 +18,8 @@ issuer, audience and environment group validation still apply; a verified JWT
 email must match exactly one active member. Different Cognito subjects with two
 emails belonging to the same member resolve to the same userId.
 
-A complete validated snapshot is applied atomically. Missing members are retained
+A complete validated snapshot is merged atomically. Unchanged email rows retain
+their UUIDs; new addresses are inserted and obsolete addresses are removed. Missing members are retained
 as inactive; removed addresses stop matching. Failed API fetches or database writes
 preserve the previous snapshot. Login requires the first successful import, so
 migrate and import before deploying the web changes. A directory outage does not
@@ -28,3 +29,24 @@ based on the email specified in the application routing.
 The source API does not provide snapshot pagination: count changes and duplicate
 IDs are rejected, but same-count changes during pagination may only reconcile on
 the next daily run.
+
+## Tag definitions
+
+Configure DISTRICT_TEAM_TAGS_URL alongside the members URL. Local development
+uses http://localhost:8762/api/members and http://localhost:8762/api/tags.
+The existing daily activity fetches both complete collections before merging
+them in one transaction. Tag id maps to user_tags.id, tag_label to tag_name,
+and tag_code to tag_code. Existing UUIDs are preserved on updates. Missing tags
+are retained because published workflow definitions may reference them.
+A code collision with a different UUID fails the transaction rather than
+silently reassigning workflow references. Resolve existing local code collisions
+before the first import. Appointments populate user_tag_memberships by matching member_id and normalized
+contact_method to a user_emails row. Only that email receives the tag. Unchanged
+memberships retain their UUIDs; obsolete assignments are removed, including
+assignments for tags absent from the snapshot. Unknown member/email references
+fail the whole transaction. Deleting an email cascades to its memberships.
+
+Migration 0006 converts legacy user memberships only when the user has exactly
+one email. Resolve zero-email or multiple-email legacy assignments before applying
+it; the migration fails rather than guessing or broadening access.
+Restart the worker after configuring the tags URL; the schedule stays unchanged.

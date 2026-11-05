@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WorkflowExecutionAlreadyStartedError } from '@temporalio/client';
 import { application, routing, makeState } from './fixtures';
+import { initialTrainingFundState } from '@district/domain/training-fund/machine';
+import { availableTrainingFundActions } from '@district/application/training-fund/actions';
 import { parseApplication, parseRouting } from '@district/contracts/training-fund/validation';
 import { approve, recordPayment } from '@district/domain/training-fund/state';
 import { signTask, verifyTask } from '@district/integrations/training-fund/tokens';
@@ -10,8 +12,10 @@ import { consumeApplication as consume } from '@district/application/training-fu
 const consumeApplication = (body: string, route: typeof routing, dependencies: Omit<Parameters<typeof consume>[2], 'isDuplicate'>) => consume(body, route, { ...dependencies, isDuplicate: error => error instanceof WorkflowExecutionAlreadyStartedError });
 
 const now = '2026-10-05T12:00:00Z';
+
 test('schema accepts the contract and rejects unexpected, malformed and inconsistent inputs', () => {
   assert.deepEqual(parseApplication(application), application);
+
   for (const value of [
     { ...application, approvers: routing.approvers },
     { ...application, declaration: false },
@@ -25,6 +29,7 @@ test('schema accepts the contract and rejects unexpected, malformed and inconsis
     { ...application, funding: { ...application.funding, reason: '   ' } },
   ]) assert.throws(() => parseApplication(value));
 });
+
 test('routing requires exactly three different people and a separate treasurer', () => {
   assert.deepEqual(parseRouting(routing), routing);
   assert.throws(() => parseRouting({ ...routing, approvers: routing.approvers.slice(1) }));
@@ -32,16 +37,22 @@ test('routing requires exactly three different people and a separate treasurer',
   assert.throws(() => parseRouting({ ...routing, treasurer: routing.approvers[0] }));
   assert.throws(() => parseRouting({ ...routing, treasurer: { ...routing.treasurer, email: routing.approvers[0].email.toUpperCase() } }));
 });
-test('three distinct approvals required; repeated clicks count once; unknown people cannot approve', () => {
+
+test('two distinct approvals form a majority; duplicates and late third approvals cannot count', () => {
   const state = makeState();
   assert.throws(() => approve(state, 'intruder', now));
   assert.throws(() => approve(state, 'treasurer', now));
-  approve(state, 'reviewer-2', now); approve(state, 'reviewer-2', now); approve(state, 'reviewer-1', now);
-  assert.equal(state.approvals.length, 2);
+  approve(state, 'reviewer-2', now); approve(state, 'reviewer-2', now);
+  assert.equal(state.approvals.length, 1);
   assert.equal(state.status, 'awaiting_approvals');
   assert.throws(() => recordPayment(state, 'treasurer', 'BANK-1', '2026-10-05', now));
-  approve(state, 'reviewer-3', now);
+  approve(state, 'reviewer-1', now);
+  assert.equal(state.approvals.length, 2);
   assert.equal(state.status, 'awaiting_payment');
+  assert.deepEqual(availableTrainingFundActions(state, routing.approvers[2].email), []);
+  assert.throws(() => approve(state, 'reviewer-3', now));
+  approve(state, 'reviewer-1', now);
+  assert.equal(state.approvals.length, 2);
   assert.throws(() => recordPayment(state, 'reviewer-1', 'BANK-1', '2026-10-05', now));
   assert.throws(() => recordPayment(state, 'treasurer', ' ', '2026-10-05', now));
   assert.throws(() => recordPayment(state, 'treasurer', 'BANK-1', '2026-02-30', now));
@@ -51,6 +62,7 @@ test('three distinct approvals required; repeated clicks count once; unknown peo
   assert.equal(state.status, 'paid');
   assert.throws(() => recordPayment(state, 'treasurer', 'BANK-2', '2026-10-05', now));
 });
+
 test('task capabilities reject tampering, expired links, invalid roles and wrong signing keys', () => {
   const key = 'a'.repeat(32);
   const identity = { workflowId: `training-fund-${application.applicationId}`, personId: 'reviewer-1', role: 'approver' as const, expiresAt: 2000 };
@@ -63,10 +75,12 @@ test('task capabilities reject tampering, expired links, invalid roles and wrong
   const altered = Buffer.from(JSON.stringify({ ...identity, personId: 'reviewer-2' })).toString('base64url') + '.' + token.split('.')[1];
   assert.throws(() => verifyTask(altered, key, 1000));
 });
+
 test('SQS is acknowledged only after Temporal starts or confirms a duplicate', async () => {
   const calls: string[] = [];
   const acknowledge = async () => { calls.push('delete'); };
   const start = async () => { calls.push('start'); };
+
   assert.equal(await consumeApplication(JSON.stringify(application), routing, { start, acknowledge }), 'started');
   assert.deepEqual(calls, ['start', 'delete']);
   calls.length = 0;
@@ -82,11 +96,15 @@ test('SQS is acknowledged only after Temporal starts or confirms a duplicate', a
 
 test('the application ledger prevents restarting an archived workflow and fails closed when unavailable', async () => {
   const calls: string[] = [];
+
   const dependencies = {
     start: async () => { calls.push('start'); },
     acknowledge: async () => { calls.push('delete'); },
-    alreadyRecorded: async () => { calls.push('ledger'); return true; },
+    alreadyRecorded: async () => { calls.push('ledger');
+
+ return true; },
   };
+
   assert.equal(await consumeApplication(JSON.stringify(application), routing, dependencies), 'duplicate');
   assert.deepEqual(calls, ['ledger', 'delete']);
   calls.length = 0;
@@ -94,4 +112,15 @@ test('the application ledger prevents restarting an archived workflow and fails 
     ...dependencies, alreadyRecorded: async () => { throw new Error('Database unavailable'); },
   }));
   assert.deepEqual(calls, []);
+});
+
+test('new states use majority while legacy snapshots preserve unanimous approval', () => {
+  const current = initialTrainingFundState(application, routing);
+  assert.equal(current.requiredApprovals, 2);
+  const legacy = initialTrainingFundState(application, routing, 'unanimous');
+  assert.equal('requiredApprovals' in legacy, false);
+  approve(legacy, 'reviewer-1', now); approve(legacy, 'reviewer-2', now);
+  assert.equal(legacy.status, 'awaiting_approvals');
+  approve(legacy, 'reviewer-3', now);
+  assert.equal(legacy.status, 'awaiting_payment');
 });

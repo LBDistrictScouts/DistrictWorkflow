@@ -1,7 +1,8 @@
+import CaseSummary from '@/components/case-summary';
 import Link from "next/link";
 
 export default function Home() {
-  return <div>
+  return <div><CaseSummary />
     <section className="hero">
       <div className="container hero-inner">
         <p className="eyebrow">Letchworth, Baldock &amp; Ashwell Scouts</p>

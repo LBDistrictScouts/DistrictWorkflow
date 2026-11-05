@@ -26,6 +26,15 @@
     "db:test:docker:up": "docker compose -f infrastructure/compose.yaml --profile test up -d --wait postgres-test",
     "db:test:docker:down": "docker compose -f infrastructure/compose.yaml --profile test stop postgres-test",
     "dev": "bash scripts/dev.sh",
-    "dev:check": "bash scripts/dev.sh --check"
+    "dev:check": "bash scripts/dev.sh --check",
+    "aws:local:up": "docker compose -f infrastructure/compose.yaml --profile aws-local up -d --wait aws-local && node scripts/aws-local.mjs",
+    "aws:local:setup": "node scripts/aws-local.mjs",
+    "aws:local:down": "docker compose -f infrastructure/compose.yaml --profile aws-local stop aws-local",
+    "test:aws:local": "yarn build:packages && yarn workspace @district/worker test:aws:local",
+    "lint:anti-slop": "oxlint --config .oxlintrc.json apps packages scripts"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.78.0",
+    "oxlint": "1.78.0"
   }
 }

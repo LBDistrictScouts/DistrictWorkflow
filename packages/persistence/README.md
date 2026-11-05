@@ -48,6 +48,16 @@ Docker is optional; see the container commands below.
 
 ## Tables and consistency
 
+Every application table has a single UUID primary key. Foreign keys are UUIDs
+referencing those primary keys and have no generated defaults. Application and
+directory user identities are supplied externally; other row IDs default to
+`gen_random_uuid()`. The `(application_id, revision)` and `(user_id, email)` pairs
+remain unique business keys, independently of row IDs.
+
+- `user_tags`: tag definitions with a generated UUID `id`, free-text nonblank
+  `tag_name`, and unique, case-sensitive `tag_code` for workflow lookup. Codes
+  accept only ASCII letters, digits and hyphens, with at least one character.
+  Names may change without changing workflow lookup codes. Email-specific assignments reference user_emails.id in `user_tag_memberships`.
 - `training_fund_applications`: one immutable submission identity, stable workflow
   ID, latest status/revision, submission time and typed JSON snapshot.
 - `training_fund_transitions`: append-only snapshots keyed by application ID and
@@ -133,3 +143,20 @@ For Docker tests, use:
 ```sh
 export TEST_DATABASE_URL=postgresql://district_test:test-only@127.0.0.1:55432/postgres
 ```
+
+## Workflow and task data model
+
+See [the model reference](../../docs/workflow-data-model.md) for entities,
+relationships, versioning and integration boundaries. All tables have UUID primary
+keys; all relational foreign keys are non-generated UUIDs referencing them.
+
+Migration `0005` replaces the initial task definition fields with step/execution
+references. It stops before changing anything if legacy tasks exist: they have no
+Temporal Run IDs, so an explicit, reviewed backfill is required rather than
+inventing execution identities or deleting tasks. Empty installations migrate
+normally. Earlier migrations remain unchanged.
+
+Published definition immutability, step/execution compatibility and append-only
+submissions are enforced with PostgreSQL triggers in migration `0005`, in addition
+to the constraints represented by Drizzle. Preserve those triggers when evolving
+the schema. Use committed migrations rather than schema push.

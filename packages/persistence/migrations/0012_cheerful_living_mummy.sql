@@ -1,0 +1,1 @@
+ALTER TABLE "award_progress" ADD COLUMN "role_assignees" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -15,14 +15,18 @@ async function main() {
   const sqs = new SQSClient({});
   let stopping = false;
   const stop = () => { stopping = true; };
+
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
+
   try {
     while (!stopping) {
       try {
         const result = await sqs.send(new ReceiveMessageCommand({ QueueUrl: queueUrl, WaitTimeSeconds: 20, MaxNumberOfMessages: 1, VisibilityTimeout: 120 }));
+
         for (const message of result.Messages ?? []) {
           if (!message.Body || !message.ReceiptHandle) continue;
+
           try {
             const outcome = await consumeApplication(message.Body, loadRouting(), {
               alreadyRecorded: application => repository.alreadyRecorded(application),
@@ -32,6 +36,7 @@ async function main() {
               })),
               acknowledge: () => sqs.send(new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle })),
             });
+
             console.info('Training Fund intake', { messageId: message.MessageId, outcome });
           } catch {
             // Leave failed/invalid messages for retry and the queue's redrive policy.
@@ -41,9 +46,11 @@ async function main() {
         }
       } catch {
         console.error('SQS polling failed; retrying in five seconds');
+
         if (!stopping) await delay(5000);
       }
     }
   } finally { sqs.destroy(); await connection.close(); await closeDatabase(); }
 }
+
 main().catch(() => { console.error('Training Fund consumer failed to start; check configuration and connectivity'); process.exitCode = 1; });

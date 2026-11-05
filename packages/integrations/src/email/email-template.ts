@@ -7,39 +7,74 @@ export interface EmailNotification {
   paragraphs: string[];
   details?: { label: string; value: string }[];
   action?: { label: string; url: string };
+  actions?: { label: string; url: string }[];
   footnote?: string;
+  taskList?: { title: string; url: string }[];
+  taskStatus?: { taskId: string; url: string };
+  statusImageUrl?: string;
 }
+
 export interface RenderedEmail { html: string; text: string }
 
 export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
 }
+
 export function validateEmailAddress(value: string): void {
+  // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate the runtime type at this external-input boundary before using the value.
   if (typeof value !== 'string' || value.length > 254 || !/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(value)) throw new TypeError('A single valid email address is required');
 }
+
 function text(value: string, label: string, maximum = 4000): void {
+  // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate the runtime type at this external-input boundary before using the value.
   if (typeof value !== 'string' || !value.trim() || value.length > maximum) throw new TypeError(`${label} must be non-empty text up to ${maximum} characters`);
 }
+
 function validate(notification: EmailNotification): void {
   validateEmailAddress(notification.to?.email);
+
   if (notification.to.name !== undefined) text(notification.to.name, 'Recipient name', 200);
   text(notification.subject, 'Subject', 200);
+
   if (/[\r\n]/.test(notification.subject)) throw new TypeError('Subject must be a single line');
   text(notification.heading, 'Heading', 200);
+
   if (notification.category !== undefined) text(notification.category, 'Category', 100);
+
   if (notification.preview !== undefined) text(notification.preview, 'Preview', 300);
+
   if (!Array.isArray(notification.paragraphs) || notification.paragraphs.length < 1 || notification.paragraphs.length > 20) throw new TypeError('Provide 1–20 paragraphs');
   notification.paragraphs.forEach(paragraph => text(paragraph, 'Paragraph'));
+
   if (notification.details !== undefined) {
     if (!Array.isArray(notification.details) || notification.details.length > 20) throw new TypeError('Provide at most 20 details');
     notification.details.forEach(detail => { text(detail.label, 'Detail label', 100); text(detail.value, 'Detail value', 2000); });
   }
-  if (notification.action !== undefined) {
-    text(notification.action.label, 'Action label', 100);
-    text(notification.action.url, 'Action URL', 4096);
-    const url = new URL(notification.action.url);
+
+  if (notification.action && notification.actions) throw new TypeError('Use action or actions');
+
+  if (notification.actions !== undefined && (!Array.isArray(notification.actions) || notification.actions.length < 1 || notification.actions.length > 10)) throw new TypeError('Provide 1–10 actions');
+
+  for (const action of notification.actions ?? (notification.action ? [notification.action] : [])) {
+    text(action.label, 'Action label', 100);
+    text(action.url, 'Action URL', 4096);
+    const url = new URL(action.url);
+
     if (url.username || url.password || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) throw new TypeError('Action URLs must use HTTPS (except localhost) and contain no credentials');
   }
+
+  if (notification.taskList !== undefined) {
+    if (!Array.isArray(notification.taskList) || !notification.taskList.length) throw new TypeError('Task list must not be empty');
+    notification.taskList.forEach(item => text(item.title, 'Task title', 2000));
+  }
+
+  for (const address of [notification.taskStatus?.url, notification.statusImageUrl, ...(notification.taskList ?? []).map(item => item.url)]) {
+    if (address === undefined) continue;
+    const url = new URL(address);
+
+    if (url.username || url.password || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) throw new TypeError('Status URLs must use HTTPS');
+  }
+
   if (notification.footnote !== undefined) text(notification.footnote, 'Footnote', 2000);
 }
 
@@ -49,13 +84,19 @@ export function renderThemedEmail(notification: EmailNotification): RenderedEmai
   const e = escapeHtml;
   const paragraphs = [notification.to.name ? `Hello ${notification.to.name},` : 'Hello,', ...notification.paragraphs];
   const details = notification.details ?? [];
+  const statusText = 'Already completed this task? No further action is needed. Email images may show an earlier status; use the link to check the current status.';
+  const actions = notification.actions ?? (notification.action ? [notification.action] : []);
+
   const plain = [
     'Letchworth, Baldock & Ashwell Scouts', notification.category ?? 'District Workflow', notification.heading,
+    ...(notification.taskStatus ? [statusText, `View current status: ${notification.taskStatus.url}`] : []),
+    ...(notification.taskList ?? []).map(item => `${item.title}:\n${item.url}`),
     ...paragraphs, ...details.map(detail => `${detail.label}: ${detail.value}`),
-    ...(notification.action ? [`${notification.action.label}:\n${notification.action.url}`] : []),
+    ...actions.map(action => `${action.label}:\n${action.url}`),
     ...(notification.footnote ? [notification.footnote] : []),
     'More time for #SkillsForLife.',
   ].join('\n\n');
+
   // Email-client compatibility requires legacy table attributes and Outlook-specific CSS.
   // noinspection HtmlDeprecatedAttribute,CssUnknownProperty
   const html = `<!doctype html>
@@ -69,11 +110,14 @@ export function renderThemedEmail(notification: EmailNotification): RenderedEmai
 <p style="margin:0 0 10px;color:#86e8a8;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">${e(notification.category ?? 'District Workflow')}</p>
 <h1 style="margin:0;font-size:28px;line-height:1.2;">${e(notification.heading)}</h1></td></tr>
 <tr><td style="padding:30px;font-size:16px;line-height:1.6;">
+${notification.taskStatus ? `<p style="margin:0 0 18px;">${notification.statusImageUrl ? `<a href="${e(notification.taskStatus.url)}"><img src="${e(notification.statusImageUrl)}" width="520" alt="View current task status" style="display:block;width:100%;max-width:520px;border:0;"></a>` : ''}${e(statusText)}<br><a href="${e(notification.taskStatus.url)}">View current status</a></p>` : ''}
+${notification.taskList?.length ? `<ul>${notification.taskList.map(item => `<li style="margin-bottom:12px;"><a href="${e(item.url)}">${e(item.title)}</a></li>`).join('')}</ul>` : ''}
 ${paragraphs.map(paragraph => `<p style="margin:0 0 18px;">${e(paragraph).replace(/\n/g, '<br>')}</p>`).join('\n')}
 ${details.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:12px 0 24px;background-color:#f5f8f8;border:1px solid #dfe7e7;border-radius:8px;">${details.map(detail => `<tr><td style="padding:12px 16px;overflow-wrap:anywhere;"><strong>${e(detail.label)}</strong><br>${e(detail.value).replace(/\n/g, '<br>')}</td></tr>`).join('')}</table>` : ''}
-${notification.action ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px 0;"><tr><td bgcolor="#05696c" style="background-color:#05696c;border-radius:8px;"><a href="${e(notification.action.url)}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:bold;">${e(notification.action.label)}</a></td></tr></table><p style="font-size:12px;line-height:1.5;color:#66747b;overflow-wrap:anywhere;">If the button does not work, copy this link:<br><a href="${e(notification.action.url)}" style="color:#05696c;word-break:break-all;">${e(notification.action.url)}</a></p>` : ''}
+${actions.map(action => `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px 0;"><tr><td bgcolor="#05696c" style="background-color:#05696c;border-radius:8px;"><a href="${e(action.url)}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:bold;">${e(action.label)}</a></td></tr></table><p style="font-size:12px;line-height:1.5;color:#66747b;overflow-wrap:anywhere;">If the button does not work, copy this link:<br><a href="${e(action.url)}" style="color:#05696c;word-break:break-all;">${e(action.url)}</a></p>`).join('\n')}
 ${notification.footnote ? `<p style="margin:24px 0 0;padding-top:20px;border-top:1px solid #dfe7e7;font-size:13px;color:#66747b;">${e(notification.footnote).replace(/\n/g, '<br>')}</p>` : ''}
 </td></tr><tr><td style="padding:22px 30px;background-color:#0c3436;color:#86e8a8;border-radius:0 0 14px 14px;font-size:14px;">More time for <strong>#SkillsForLife.</strong></td></tr>
 </table></td></tr></table></body></html>`;
+
   return { html, text: plain };
 }

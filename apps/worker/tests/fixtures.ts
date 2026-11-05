@@ -1,4 +1,5 @@
 import type { TrainingFundApplication, TrainingFundRouting, TrainingFundState } from '@district/contracts/training-fund/types';
+
 export const application: TrainingFundApplication = {
   schemaVersion: '1.0', type: 'district.training-fund.application',
   applicationId: '10000000-0000-4000-8000-000000000001', submittedAt: '2026-10-05T10:00:00Z',
@@ -7,8 +8,10 @@ export const application: TrainingFundApplication = {
   funding: { requestedPence: 10000, reason: 'Support with course fees', benefit: 'Provide first aid cover for activities', otherFunding: 'Group contributes £50' },
   declaration: true,
 };
+
 export const routing: TrainingFundRouting = {
   approvers: [1, 2, 3].map(n => ({ id: `reviewer-${n}`, name: `Reviewer ${n}`, email: `reviewer-${n}@example.org` })),
   treasurer: { id: 'treasurer', name: 'Treasurer', email: 'treasurer@example.org' },
 };
-export const makeState = (): TrainingFundState => structuredClone({ application, routing, status: 'awaiting_approvals', approvals: [] });
+
+export const makeState = (): TrainingFundState => structuredClone({ application, routing, status: 'awaiting_approvals', requiredApprovals: 2, approvals: [] });

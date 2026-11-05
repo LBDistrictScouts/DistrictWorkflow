@@ -1,4 +1,16 @@
 services:
+  aws-local:
+    image: motoserver/moto:5.2.1
+    profiles: ['aws-local']
+    ports:
+      - '127.0.0.1:4566:4566'
+    environment:
+      MOTO_PORT: '4566'
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:4566/moto-api/')"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
   postgres:
     image: postgres:17-alpine
     environment:

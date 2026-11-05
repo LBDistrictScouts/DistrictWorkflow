@@ -122,3 +122,17 @@ its `.env`). Include built shared packages and workspace dependencies in both de
 See [architecture](docs/architecture.md) for dependency rules and the planned
 PostgreSQL/Drizzle persistence boundary. See [database setup](packages/persistence/README.md)
 for local startup and migration commands.
+
+## Anti-slop checks
+
+Run `yarn lint:anti-slop` with Node 24 to check application, package, and script sources.
+The existing `yarn lint` command continues to run the web ESLint checks.
+GitHub Actions runs the anti-slop command on pushes and pull requests after an immutable Yarn install; violations fail the check.
+
+The generic rules from [anti-slop](https://github.com/dmmulroy/anti-slop) are vendored
+in `tools/oxlint/anti-slop`, with revision and license recorded there. Policy lives in
+`.oxlintrc.json`; generated output and third-party vendored code are excluded.
+Keep `oxlint` and `@oxlint/plugins` pinned to the same version when upgrading.
+Source violations fail CI. Narrow inline exceptions document transport parsers,
+dynamic JSON storage, deliberate optional-field omission, and library typing contracts.
+Keep exceptions local and explain the invariant; do not disable rules globally.

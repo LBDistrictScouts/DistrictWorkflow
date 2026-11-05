@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:lba:training-fund:application:1.0",
+  "$id": "urn:lba:training-fund:application:1.1",
   "title": "District Training Fund application",
   "description": "The raw JSON body of an SQS message. Money is GBP in integer pence. Do not include bank details. applicationId must remain unchanged when retrying the same submission.",
   "type": "object",
@@ -17,7 +17,10 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": "1.0"
+      "enum": [
+        "1.0",
+        "1.1"
+      ]
     },
     "type": {
       "const": "district.training-fund.application"
@@ -35,9 +38,7 @@
       "additionalProperties": false,
       "required": [
         "name",
-        "email",
-        "group",
-        "role"
+        "email"
       ],
       "properties": {
         "name": {
@@ -57,6 +58,11 @@
         },
         "role": {
           "$ref": "#/$defs/shortText"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Directory user UUID; required for v1.1 applications."
         }
       }
     },
@@ -138,7 +144,6 @@
             "channel",
             "receivedVia",
             "receivedAt",
-            "reference",
             "registeredBy",
             "registeredAt"
           ],
@@ -207,5 +212,37 @@
       "minimum": 1,
       "maximum": 10000000
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "applicant": {
+            "required": [
+              "userId"
+            ],
+            "type": "object"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "applicant": {
+            "required": [
+              "group",
+              "role"
+            ],
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
 }

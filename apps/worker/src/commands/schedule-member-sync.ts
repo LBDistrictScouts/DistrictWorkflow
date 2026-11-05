@@ -1,10 +1,13 @@
 
 import { Client, Connection, ScheduleOverlapPolicy, ScheduleAlreadyRunning } from '@temporalio/client';
 import { connectionOptions, namespace, taskQueue } from '@district/integrations/temporal/config';
+
 async function main() {
   const connection = await Connection.connect(connectionOptions);
+
   try {
     const client = new Client({ connection, namespace });
+
     try {
       await client.schedule.create({
         scheduleId: 'district-member-sync-daily',
@@ -20,4 +23,5 @@ async function main() {
     }
   } finally { await connection.close(); }
 }
+
 main().catch(error => { console.error(error); process.exitCode = 1; });

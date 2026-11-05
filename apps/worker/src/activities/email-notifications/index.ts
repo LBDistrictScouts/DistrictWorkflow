@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { prepareTaskEmail } from '@district/integrations/email/task-status';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { ApplicationFailure } from '@temporalio/common';
 import { renderThemedEmail, type EmailNotification } from '@district/integrations/email/email-template';
@@ -8,9 +9,12 @@ import { deliverThemedEmail, emailDeliverySettings } from '@district/integration
 export async function sendThemedEmail(notification: EmailNotification): Promise<{ messageId: string }> {
   try { renderThemedEmail(notification); }
   catch { throw ApplicationFailure.nonRetryable('Invalid email notification content', 'InvalidEmailNotification'); }
+
   // Configuration and delivery failures remain retryable so operators can repair the sender/SES setup.
+  notification = prepareTaskEmail(notification);
   const settings = emailDeliverySettings();
   const client = new SESv2Client({});
+
   try {
     return await deliverThemedEmail(notification, settings, input => client.send(new SendEmailCommand(input)));
   } finally { client.destroy(); }

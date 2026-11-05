@@ -40,13 +40,20 @@ origin. In the Cognito app client enable authorization-code grant and the
 Sign-in uses authorization code + PKCE, state, and nonce. The server checks the
 JWT signature against the pool JWKS, issuer, audience, expiry, ID-token use and
 group on every protected request. The ID token stays in an HttpOnly, SameSite=Lax
-cookie (Secure on HTTPS). Sessions expire with the ID token; sign in again to
-renew. Group changes take effect when the existing token expires. Sign out clears
-the local cookie and redirects through Cognito logout.
+cookie (Secure on HTTPS). Sessions renew on protected requests within 60 seconds of ID-token expiry, including
+after an idle period. Refresh tokens stay in an HttpOnly, SameSite=Lax cookie
+(Secure on HTTPS), with 30-day browser retention. Cognito enforces its configured
+refresh-token lifetime; expired/revoked tokens require sign-in. Renewal validates
+the signed subject, workflow group and active directory membership again, and
+retains rotated refresh tokens. Existing sessions need one new sign-in to obtain
+a refresh token. Group changes take effect when the existing token expires. Sign out clears
+both local session cookies and redirects through Cognito logout.
 
 `/actions` lists outstanding workflow tasks for the signed-in account. Training
-Fund assignments match the JWT's verified email (`email_verified: true`) against
-routing email addresses, ignoring case and surrounding whitespace. Approvals
+Fund assignments match the authenticated email against
+routing email addresses, ignoring case and surrounding whitespace. SAML profiles
+asserted by the configured Cognito pool do not require `email_verified: true`;
+other profiles do. All sessions require a unique active directory member match. Approvals
 already given, payment tasks before approval, and completed workflows are hidden.
 PostgreSQL selects candidate assignments and Temporal confirms their current
 state. Loading fails visibly if either service is unavailable. Task links last

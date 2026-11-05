@@ -20,7 +20,11 @@
     "training-fund:resend": "tsx src/commands/resend-training-fund.ts",
     "test:registration-web": "node --import tsx --test tests/*.web.ts",
     "email:preview": "node --import tsx scripts/preview-emails.ts",
-    "members:schedule": "tsx src/commands/schedule-member-sync.ts"
+    "responses:schedule": "tsx src/commands/schedule-response-reminders.ts",
+    "tasks:schedule": "tsx src/commands/schedule-task-digest.ts",
+    "members:schedule": "tsx src/commands/schedule-member-sync.ts",
+    "test:aws:local": "node --import tsx --test tests/training-fund.local-aws.ts",
+    "awards:schedule": "tsx src/commands/schedule-award-reminders.ts"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.0.0",
@@ -30,6 +34,7 @@
     "@district/domain": "workspace:*",
     "@district/integrations": "workspace:*",
     "@district/persistence": "workspace:*",
+    "@temporalio/activity": "~1.24.0",
     "@temporalio/client": "~1.24.0",
     "@temporalio/common": "~1.24.0",
     "@temporalio/worker": "~1.24.0",

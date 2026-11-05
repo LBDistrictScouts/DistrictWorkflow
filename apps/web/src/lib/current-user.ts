@@ -1,11 +1,15 @@
 
 import type { JWTPayload } from 'jose';
-import { userRepository } from '@district/persistence/runtime';
-import { verifySession } from './cognito';
-export async function verifyUserSession(token: string): Promise<JWTPayload & { userId: string; name: string }> {
+import { userRepository, profileRepository } from '@district/persistence/runtime';
+import { verifySession, sessionEmail } from './cognito';
+
+export async function verifyUserSession(token: string): Promise<JWTPayload & { userId: string; name: string; email: string }> {
   const identity = await verifySession(token);
-  if (identity.email_verified !== true || typeof identity.email !== 'string') throw new Error('Verified email required');
-  const user = await userRepository().findByEmail(identity.email);
+  const email = sessionEmail(identity);
+  const user = await userRepository().findByEmail(email);
+
   if (!user) throw new Error('No unique active district member matches this email');
-  return { ...identity, userId: user.id, name: user.name };
+  const profile = await profileRepository().findByUserId(user.id);
+
+  return { ...identity, email, userId: user.id, name: profile.displayName ?? user.name };
 }

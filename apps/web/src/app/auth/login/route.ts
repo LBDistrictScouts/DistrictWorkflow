@@ -13,6 +13,7 @@ export async function GET() {
     const response = NextResponse.redirect(url);
     response.cookies.set(transactionCookie, JSON.stringify({ state, nonce, verifier }), { ...cookieOptions(), maxAge: 600 });
     response.headers.set('Cache-Control', 'no-store');
+
     return response;
   } catch { return Response.json({ error: 'Sign-in is not configured.' }, { status: 503 }); }
 }

@@ -4,19 +4,25 @@ import schema from './application.schema.json';
 import type { TrainingFundApplication, TrainingFundRouting } from './types';
 
 const ajv = new Ajv2020({ allErrors: true });
+
 addFormats(ajv);
+
 const validate = ajv.compile<TrainingFundApplication>(schema);
 
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Accept untrusted input here; the receiving parser validates it before domain use.
 export function parseApplication(value: unknown): TrainingFundApplication {
   if (!validate(value)) {
     throw new Error(ajv.errorsText(validate.errors, { separator: '; ' }));
   }
+
   if (value.funding.requestedPence > value.course.costPence) {
     throw new Error('Requested funding cannot exceed the course cost');
   }
+
   return value;
 }
 
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Accept untrusted input here; the receiving parser validates it before domain use.
 export function parseRouting(value: unknown): TrainingFundRouting {
   const routingSchema = {
     type: 'object', additionalProperties: false, required: ['approvers', 'treasurer'],
@@ -33,11 +39,15 @@ export function parseRouting(value: unknown): TrainingFundRouting {
       },
     } },
   };
+
   const check = ajv.compile<TrainingFundRouting>(routingSchema);
+
   if (!check(value)) throw new Error(`Invalid routing: ${ajv.errorsText(check.errors)}`);
   const people = [...value.approvers, value.treasurer];
+
   if (new Set(people.map(p => p.id)).size !== 4 || new Set(people.map(p => p.email.toLowerCase())).size !== 4) {
     throw new Error('Configure three distinct approvers and a separate treasurer');
   }
+
   return value;
 }

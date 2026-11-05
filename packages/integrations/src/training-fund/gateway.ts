@@ -11,15 +11,18 @@ import { availableTrainingFundActions } from '@district/application/training-fun
 // Lazy connection: building/rendering the app does not connect to Temporal.
 // A failed connection can be retried on a subsequent request.
 let connectionPromise: Promise<Connection> | undefined;
+
 function connection() {
   return connectionPromise ??= Connection.connect(connectionOptions).catch(error => {
     connectionPromise = undefined;
     throw error;
   });
 }
+
 async function withHandle<T>(workflowId: string, run: (handle: ReturnType<Client['workflow']['getHandle']>) => Promise<T>): Promise<T> {
   const connected = await connection();
   const client = new Client({ connection: connected, namespace });
+
   return connected.withDeadline(Date.now() + 15000, () => run(client.workflow.getHandle(workflowId)));
 }
 
@@ -27,9 +30,11 @@ export const trainingFundGateway: TrainingFundDependencies = {
   async enqueue(application) {
     const queueUrl = required('TRAINING_FUND_QUEUE_URL');
     const sqs = new SQSClient({});
+
     try {
       await sqs.send(new SendMessageCommand({
         QueueUrl: queueUrl, MessageBody: JSON.stringify(application),
+        // oxlint-disable-next-line anti-slop/no-conditional-empty-object-spread -- Preserve absence of optional fields; an own property with undefined is not equivalent for this payload.
         ...(queueUrl.endsWith('.fifo') ? { MessageGroupId: application.applicationId, MessageDeduplicationId: application.applicationId } : {}),
       }));
     } finally { sqs.destroy(); }
@@ -40,6 +45,7 @@ export const trainingFundGateway: TrainingFundDependencies = {
     catch (error) {
       if (!(error instanceof WorkflowNotFoundError)) throw error;
       const saved = await trainingFundRepository().findByWorkflowId(workflowId);
+
       if (saved?.state.status === 'paid') return saved.state;
       throw error; // Pending workflow recovery remains an explicit operator action.
     }
@@ -52,8 +58,10 @@ export const trainingFundGateway: TrainingFundDependencies = {
 export async function trainingFundActions(email: string) {
   const records = await trainingFundRepository().findPendingForEmail(email);
   const actions = [];
+
   for (const record of records) {
     const state = await trainingFundGateway.query(record.workflowId);
+
     for (const assignment of availableTrainingFundActions(state, email)) {
       const token = signTask({ ...assignment, workflowId: record.workflowId, expiresAt: Date.now() + 15 * 60 * 1000 }, signingKey());
       actions.push({
@@ -66,5 +74,6 @@ export async function trainingFundActions(email: string) {
       });
     }
   }
+
   return actions;
 }

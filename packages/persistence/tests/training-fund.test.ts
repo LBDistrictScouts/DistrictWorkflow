@@ -1,3 +1,4 @@
+import { createWorkflowOverviewRepository } from '../src/workflow-overview-repository';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +16,7 @@ function initial(): TrainingFundState {
     course: { title: 'First aid', provider: 'Example Training', startDate: '2026-11-01', location: 'District', costPence: 10000 },
     funding: { requestedPence: 5000, reason: 'Course fees', benefit: 'First aid cover' }, declaration: true,
   };
+
   return { application, routing: {
     approvers: [1, 2, 3].map(n => ({ id: `reviewer-${n}`, name: `Reviewer ${n}`, email: `reviewer-${n}@example.org` })),
     treasurer: { id: 'treasurer', name: 'Treasurer', email: 'treasurer@example.org' },
@@ -25,6 +27,7 @@ test('generated PostgreSQL migration, atomic ledger, retries, conflicts and comp
   const database = await createTestDatabase();
   const db = database.db;
   const repository = createTrainingFundRepository(db);
+
   try {
     await database.migrate();
     await database.migrate(); // Deployment re-run is harmless.
@@ -49,6 +52,7 @@ test('generated PostgreSQL migration, atomic ledger, retries, conflicts and comp
     assert.equal((await repository.findPendingForEmail('reviewer-2@example.org')).length, 1);
     await assert.rejects(repository.save({ workflowId, revision: 1, state: { ...state, approvals: [{ personId: 'reviewer-2', approvedAt: '2026-10-05T11:00:00Z' }] } }), ProjectionConflict);
     await assert.rejects(repository.save({ workflowId, revision: 3, state }), ProjectionConflict);
+    // SAFETY: Deliberately invalid fixture: this test verifies persistence rejects a false declaration at runtime.
     await assert.rejects(repository.save({ workflowId, revision: 1, state: { ...state, application: { ...state.application, declaration: false as true } } }));
 
     // A database failure after the audit insert must roll back both tables.
@@ -68,6 +72,9 @@ test('generated PostgreSQL migration, atomic ledger, retries, conflicts and comp
     state.status = 'paid';
     state.payment = { personId: 'treasurer', reference: 'BANK-1', paidAt: '2026-10-05', recordedAt: '2026-10-05T12:00:00Z' };
     await repository.save({ workflowId, revision: 4, state });
+    await repository.save({ workflowId, revision: 0, state: original });
+    const [businessCase] = await db.select().from(schema.workflowCases);
+    assert.equal(businessCase?.status, 'completed', 'late initialization retry cannot reopen a paid application');
     assert.deepEqual((await repository.findByApplicationId(applicationId))?.state, state);
     assert.deepEqual(await repository.findPendingForEmail('treasurer@example.org'), []);
     assert.equal((await db.select().from(schema.trainingFundTransitions)).length, 5);
@@ -81,8 +88,10 @@ test('generated PostgreSQL migration, atomic ledger, retries, conflicts and comp
     staffState.application.submission = { channel: 'staff', receivedVia: 'email', receivedAt: '2026-10-05', reference: 'Email reference', registeredBy: { id: 'staff', name: 'Registrar' }, registeredAt: '2026-10-05T10:00:00Z' };
     await repository.save({ workflowId: `training-fund-${staffState.application.applicationId}`, revision: 0, state: staffState });
     const retry = structuredClone(staffState.application);
+
     if (retry.submission?.channel === 'staff') retry.submission.registeredAt = '2026-10-05T10:05:00Z';
     assert.equal(await repository.alreadyRecorded(retry), true);
+
     if (retry.submission?.channel === 'staff') retry.submission.registeredBy.id = 'different-registrar';
     await assert.rejects(repository.alreadyRecorded(retry), ProjectionConflict);
 
@@ -97,6 +106,7 @@ test('generated PostgreSQL migration, atomic ledger, retries, conflicts and comp
 test('separate PostgreSQL sessions cannot commit different decisions at the same revision', async () => {
   const database = await createTestDatabase();
   const repository = createTrainingFundRepository(database.db);
+
   try {
     await database.migrate();
     const state = initial();
@@ -109,10 +119,12 @@ test('separate PostgreSQL sessions cannot commit different decisions at the same
     const second = structuredClone(state);
     first.approvals.push({ personId: 'reviewer-1', approvedAt: '2026-10-05T11:00:00Z' });
     second.approvals.push({ personId: 'reviewer-2', approvedAt: '2026-10-05T11:00:00Z' });
+
     const writes = await Promise.allSettled([
       repository.save({ workflowId, revision: 1, state: first }),
       repository.save({ workflowId, revision: 1, state: second }),
     ]);
+
     assert.equal(writes.filter(result => result.status === 'fulfilled').length, 1);
     const rejected = writes.find(result => result.status === 'rejected');
     assert.ok(rejected?.status === 'rejected' && rejected.reason instanceof ProjectionConflict);
@@ -120,5 +132,29 @@ test('separate PostgreSQL sessions cannot commit different decisions at the same
     assert.equal(saved?.revision, 1);
     assert.deepEqual(saved?.state, writes[0].status === 'fulfilled' ? first : second);
     assert.equal((await database.db.select().from(schema.trainingFundTransitions)).length, 2);
+  } finally { await database.close(); }
+});
+
+test('workflow overview includes every reviewer and preserves historical task status', async () => {
+  const database = await createTestDatabase();
+
+  try {
+    await database.migrate();
+    const state = initial();
+    const workflowId = `training-fund-${state.application.applicationId}`;
+    const repository = createTrainingFundRepository(database.db);
+    const overview = createWorkflowOverviewRepository(database.db);
+    await repository.save({ workflowId, revision: 0, state });
+    const initialTasks = await overview.trainingFundTasks();
+    assert.equal(initialTasks.length, 3);
+    assert.ok(initialTasks.every(task => task.status === 'pending'));
+    assert.deepEqual(new Set(initialTasks.map(task => task.assignee)), new Set(['Reviewer 1', 'Reviewer 2', 'Reviewer 3']));
+    const approved = { ...state, approvals: [{ personId: 'reviewer-1', approvedAt: '2026-10-06T10:00:00Z' }] };
+    await repository.save({ workflowId, revision: 1, state: approved });
+    assert.equal((await overview.trainingFundTasks()).find(task => task.assignee === 'Reviewer 1')!.status, 'completed');
+    const payable = { ...approved, status: 'awaiting_payment' as const, approvals: [...approved.approvals, { personId: 'reviewer-2', approvedAt: '2026-10-06T11:00:00Z' }] };
+    await repository.save({ workflowId, revision: 2, state: payable });
+    assert.equal((await overview.trainingFundTasks()).find(task => task.assignee === 'Reviewer 3')!.status, 'not_required');
+    assert.equal((await overview.trainingFundTasks()).find(task => task.assignee === 'Treasurer')!.status, 'pending');
   } finally { await database.close(); }
 });

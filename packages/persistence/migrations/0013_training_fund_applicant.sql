@@ -1,0 +1,3 @@
+ALTER TABLE "training_fund_applications" ADD COLUMN "applicant_user_id" uuid;--> statement-breakpoint
+ALTER TABLE "training_fund_applications" ADD CONSTRAINT "training_fund_applications_applicant_user_id_users_id_fk" FOREIGN KEY ("applicant_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "training_fund_applications" ADD CONSTRAINT "training_fund_applicant_user_matches" CHECK ("training_fund_applications"."applicant_user_id" IS NOT DISTINCT FROM ("training_fund_applications"."state"->'application'->'applicant'->>'userId')::uuid);

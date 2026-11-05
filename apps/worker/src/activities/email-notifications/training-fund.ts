@@ -8,6 +8,7 @@ import { signTask } from '@district/integrations/training-fund/tokens';
 // The underlying approval/payment commands are idempotent.
 export async function notifyTrainingFundTask(applicationId: string, person: Person, role: TaskIdentity['role']): Promise<void> {
   const days = Number(process.env.TRAINING_FUND_LINK_DAYS || '30');
+
   if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error('TRAINING_FUND_LINK_DAYS must be 1–365');
   const token = signTask({ workflowId: workflowIdFor(applicationId), personId: person.id, role, expiresAt: Date.now() + days * 86400000 }, signingKey());
   // Fragment keeps the capability out of ordinary HTTP access logs and referrers.
@@ -18,6 +19,7 @@ export async function notifyTrainingFundTask(applicationId: string, person: Pers
 /** Domain content only: signing stays in the activity; branding/delivery are shared. */
 export function trainingFundTaskEmail(applicationId: string, person: Person, role: TaskIdentity['role'], url: string, days: number): EmailNotification {
   const task = role === 'approver' ? 'Review and approve this Training Fund application' : 'Arrange payment for this approved Training Fund application';
+
   return {
     to: { email: person.email, name: person.name },
     subject: `Training Fund: ${role === 'approver' ? 'approval requested' : 'ready for payment'}`,

@@ -11,10 +11,12 @@ const now = '2026-10-05T15:00:00Z';
 
 test('staff registration requires an authenticated identity and explicit permission', () => {
   assert.deepEqual(staffIdentityFromSession({ authenticated: true, user: staff, permissions: ['training-fund:register'] }), staff);
+
   for (const value of [null, { authenticated: true }, { authenticated: true, user: staff, permissions: [] }, { authenticated: false, user: staff, permissions: ['training-fund:register'] }, { authenticated: true, user: { id: '', name: 'Staff' }, permissions: ['training-fund:register'] }]) {
     assert.equal(staffIdentityFromSession(value), null);
   }
 });
+
 test('both initiation routes produce valid messages; server owns provenance', () => {
   const forged = { channel: 'staff', registeredBy: { id: 'forged', name: 'Forged identity' } };
   const member = parseApplication(memberSubmission({ ...application, submission: forged }));
@@ -22,16 +24,24 @@ test('both initiation routes produce valid messages; server owns provenance', ()
   const registered = parseApplication(staffSubmission({ ...application, registration, submission: forged }, staff, now));
   assert.deepEqual(registered.submission, { channel: 'staff', ...registration, registeredBy: staff, registeredAt: now });
   assert.equal('registration' in registered, false);
+
+  for (const reference of [undefined, '', '   ']) {
+    const optional = parseApplication(staffSubmission({ ...application, registration: { ...registration, reference } }, staff, now));
+    assert.equal(optional.submission?.channel, 'staff');
+    assert.ok(optional.submission && !('reference' in optional.submission));
+  }
+
   assert.deepEqual(parseApplication(application), application); // Legacy website messages remain valid.
   const state = makeState(); state.application = registered;
   approve(state, 'reviewer-1', now); approve(state, 'reviewer-2', now);
-  assert.equal(state.status, 'awaiting_approvals');
-  approve(state, 'reviewer-3', now);
+  assert.equal(state.requiredApprovals, 2);
   assert.equal(state.status, 'awaiting_payment');
 });
+
 test('staff registration rejects missing or invalid source details', () => {
-  for (const value of [undefined, {}, { ...registration, receivedVia: 'unknown' }, { ...registration, receivedAt: '2026-02-30' }, { ...registration, receivedAt: '2027-01-01' }, { ...registration, reference: ' ' }]) {
+  for (const value of [undefined, {}, { ...registration, receivedVia: 'unknown' }, { ...registration, receivedAt: '2026-02-30' }, { ...registration, receivedAt: '2027-01-01' }, { ...registration, reference: 42 }, { ...registration, reference: 'x'.repeat(501) }]) {
     assert.throws(() => staffSubmission({ ...application, registration: value }, staff, now));
   }
+
   assert.throws(() => parseApplication({ ...application, submission: { channel: 'staff' } }));
 });

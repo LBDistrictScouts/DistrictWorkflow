@@ -18,6 +18,7 @@
   "dependencies": {
     "@district/application": "workspace:*",
     "@district/contracts": "workspace:*",
+    "@district/domain": "workspace:*",
     "dotenv": "~18.0.5",
     "drizzle-orm": "^0.45.1",
     "pg": "^8.16.3"

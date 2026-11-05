@@ -5,14 +5,17 @@ import type { greetingWorkflow } from './workflows';
 
 async function main(): Promise<void> {
   const connection = await Connection.connect(connectionOptions);
+
   try {
     const client = new Client({ connection, namespace });
+
     const handle = await client.workflow.start<typeof greetingWorkflow>('greetingWorkflow', {
       taskQueue,
       workflowId: `greeting-${randomUUID()}`,
       args: [process.argv[2] || 'DistrictWorkflow'],
       workflowExecutionTimeout: '1 minute',
     });
+
     console.log(`Started workflow: ${handle.workflowId}`);
     console.log(await handle.result());
   } finally {
@@ -20,7 +23,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

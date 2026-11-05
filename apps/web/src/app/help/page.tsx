@@ -10,7 +10,7 @@ export default function Help() {
       <p className="eyebrow">Start here</p><h2 id="guide-heading">Welcome to District Workflow.</h2><p className="guide-intro">This is the new home for guided district tasks at Letchworth, Baldock &amp; Ashwell Scouts.</p>
       <div className="guide-step"><span>01</span><div><h3>Find a workflow</h3><p>The workflows page is where you’ll find available district processes. The District Training Fund supports training that benefits local Scouting. Open the application through the signed-in members website.</p><Link className="text-link" href="/workflows">Go to workflows →</Link></div></div>
       <div className="guide-step"><span>02</span><div><h3>Make yourself at home</h3><p>Use the navigation to move between pages. The colour theme button in the header switches between light and dark mode, and remembers your preference on this device.</p></div></div>
-      <div className="guide-step"><span>03</span><div><h3>Review and payment</h3><p>Training Fund applications require three individual approvals. Each reviewer receives a personal task link. Once everyone has approved, the district treasurer receives a task to arrange and record payment.</p></div></div>
+      <div className="guide-step"><span>03</span><div><h3>Review and payment</h3><p>Training Fund applications require two approvals from three assigned reviewers. Each reviewer receives a personal task link. Once two reviewers have approved, the district treasurer receives a task to arrange and record payment.</p></div></div>
     </section>
   </div>;
 }

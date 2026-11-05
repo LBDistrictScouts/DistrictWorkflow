@@ -12,16 +12,20 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
-    "test:auth": "node --experimental-strip-types --test tests/cognito.test.mjs"
+    "test:auth": "node --import tsx --test tests/cognito.test.mjs",
+    "test:workflows": "node --import tsx --test tests/workflow*.test.tsx"
   },
   "dependencies": {
     "@district/application": "workspace:*",
     "@district/contracts": "workspace:*",
+    "@district/domain": "workspace:*",
     "@district/integrations": "workspace:*",
+    "@statelyai/graph": "0.5.0",
     "jose": "^6.2.13",
     "next": "16.4.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "xstate": "^5"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
@@ -29,6 +33,7 @@
     "@types/react-dom": "^19.2.5",
     "eslint": "^9.39.0",
     "eslint-config-next": "16.4.1",
+    "tsx": "~4.23.15",
     "typescript": "~5.9.3"
   }
 }

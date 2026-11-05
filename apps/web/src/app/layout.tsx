@@ -1,3 +1,4 @@
+import TaskModal from '@/components/tasks/task-modal';
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <Navigation account={<UserWell />} />
       <main id={mainContentId} tabIndex={-1}>{children}</main>
       <Footer />
+      <TaskModal />
     </body>
   </html>;
 }

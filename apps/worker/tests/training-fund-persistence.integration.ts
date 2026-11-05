@@ -23,37 +23,46 @@ test('persisted workflow commits decisions, serializes simultaneous approvals an
   let lostReceipt = false;
   const attempts: number[] = [];
   const taskQueue = `database-test-${randomUUID()}`;
+
   const worker = await Worker.create({ connection: env.nativeConnection, taskQueue,
     workflowsPath: require.resolve('../src/workflows/index'),
-    activities: {
+    activities: { resolveRoleUser: async (tag: string) => { assert.equal(tag, 'training-fund-approvers');
+
+ return routing.approvers.map(person => ({ id: person.id, name: person.name, appointmentEmail: person.email })); },
       notifyTrainingFundTask: async () => {},
       persistTrainingFundState: async (input: TrainingFundRecord) => {
         attempts.push(input.revision);
+
         try { await repository.save(input); }
         catch (error) {
           if (error instanceof ProjectionConflict) throw ApplicationFailure.nonRetryable(error.message, 'ProjectionConflict');
           throw error;
         }
+
         if (input.revision === 1 && !lostReceipt) { lostReceipt = true; throw new Error('Simulated lost commit receipt'); }
       },
     },
   });
+
   try {
     await worker.runUntil(() => env.client.connection.withDeadline(Date.now() + 20000, async () => {
       const workflowId = `training-fund-${application.applicationId}`;
-      const handle = await env.client.workflow.start('trainingFundWorkflow', { workflowId, taskQueue, args: [application, routing, { persistState: true }] });
+      const handle = await env.client.workflow.start('trainingFundWorkflow', { workflowId, taskQueue, args: [application, { ...routing, approvers: routing.approvers.map(person => ({ ...person, id: `stale-${person.id}`, email: `stale-${person.email}` })) }, { persistState: true }] });
       await assert.rejects(handle.executeUpdate('recordTrainingFundPayment', { args: ['treasurer', 'BANK-1', '2026-01-01'] }));
-      const approvals = await Promise.all(['reviewer-1', 'reviewer-2', 'reviewer-1', 'reviewer-3'].map(personId => handle.executeUpdate<TrainingFundState, [string]>('approveTrainingFund', { args: [personId] })));
+      const approvals = await Promise.all(['reviewer-1', 'reviewer-2', 'reviewer-1'].map(personId => handle.executeUpdate<TrainingFundState, [string]>('approveTrainingFund', { args: [personId] })));
       assert.ok(approvals.every(state => state.approvals.length >= 1));
       assert.equal((await repository.findByWorkflowId(workflowId))?.state.status, 'awaiting_payment');
+      await assert.rejects(handle.executeUpdate('approveTrainingFund', { args: ['reviewer-3'] }));
       await handle.executeUpdate('recordTrainingFundPayment', { args: ['treasurer', 'BANK-1', '2026-01-01'] });
+      // SAFETY: This test starts the registered workflow whose declared result is the asserted domain type.
       const result = await handle.result() as TrainingFundState;
       assert.equal(result.status, 'paid');
+      assert.deepEqual(result.routing.approvers, routing.approvers);
       const saved = await repository.findByApplicationId(application.applicationId);
       assert.deepEqual(saved?.state, result);
-      assert.equal(saved?.revision, 4);
-      assert.deepEqual(attempts, [0, 1, 1, 2, 3, 4]);
-      assert.equal((await db.select().from(schema.trainingFundTransitions)).length, 5);
+      assert.equal(saved?.revision, 3);
+      assert.deepEqual(attempts, [0, 1, 1, 2, 3]);
+      assert.equal((await db.select().from(schema.trainingFundTransitions)).length, 4);
       assert.equal(await repository.alreadyRecorded(application), true);
       await Worker.runReplayHistory({ workflowsPath: require.resolve('../src/workflows/index') }, await handle.fetchHistory());
     }));

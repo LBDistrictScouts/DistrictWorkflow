@@ -1,8 +1,10 @@
-import { ApplicationFailure, allHandlersFinished, workflowInfo, condition, defineQuery, defineUpdate, proxyActivities, setHandler } from '@temporalio/workflow';
+import { resolveTrainingFundApprovers } from '@district/domain/training-fund/approvers';
+import type { resolveRoleUser } from '../../activities/directory';
+import { ApplicationFailure, patched, allHandlersFinished, workflowInfo, condition, defineQuery, defineUpdate, proxyActivities, setHandler } from '@temporalio/workflow';
 import type { TrainingFundApplication, TrainingFundRouting, TrainingFundState } from '@district/contracts/training-fund/types';
 import type { notifyTrainingFundTask, persistTrainingFundState } from '../../activities';
 import { approve, recordPayment } from '@district/domain/training-fund/state';
-import { initialTrainingFundState } from '@district/domain/training-fund/machine';
+import { initialTrainingFundState } from '@district/domain/training-fund/runtime-machine';
 
 export const trainingFundState = defineQuery<TrainingFundState>('trainingFundState');
 export const approveTrainingFund = defineUpdate<TrainingFundState, [string]>('approveTrainingFund');
@@ -12,20 +14,33 @@ const { notifyTrainingFundTask: notify } = proxyActivities<{ notifyTrainingFundT
   startToCloseTimeout: '30 seconds', retry: { initialInterval: '10 seconds', maximumInterval: '10 minutes' },
 });
 
+const directory = proxyActivities<{ resolveRoleUser: typeof resolveRoleUser }>({ startToCloseTimeout: '30 seconds', retry: { initialInterval: '5 seconds', maximumInterval: '1 minute' } });
+
 export async function trainingFundWorkflow(application: TrainingFundApplication, routing: TrainingFundRouting, options?: { persistState: true }): Promise<TrainingFundState> {
+  // Existing histories retain their recorded routing and approval identities.
+  if (patched('training-fund-role-approvers-v1')) {
+    const matches = await directory.resolveRoleUser('training-fund-approvers');
+
+    try { routing = { ...routing, approvers: resolveTrainingFundApprovers(matches, routing.treasurer) }; }
+    catch (error) { throw ApplicationFailure.nonRetryable((error instanceof Error ? error.message : String(error)), 'InvalidTrainingFundApprovers'); }
+  }
+
   // The recorded input selects the new path. Existing two-argument histories
   // retain their exact command sequence and do not suddenly acquire DB writes.
   if (options?.persistState) return persistedTrainingFundWorkflow(application, routing);
-  const state = initialTrainingFundState(application, routing);
+  // Advancing after two approvals changes command timing; unpatched histories stay unanimous.
+  const state = initialTrainingFundState(application, routing, patched('training-fund-majority-v1') ? 'majority' : 'unanimous');
   setHandler(trainingFundState, () => state);
   setHandler(approveTrainingFund, personId => {
     try { approve(state, personId, new Date().toISOString()); }
-    catch (error) { throw ApplicationFailure.nonRetryable((error as Error).message, 'InvalidDecision'); }
+    catch (error) { throw ApplicationFailure.nonRetryable((error instanceof Error ? error.message : String(error)), 'InvalidDecision'); }
+
     return state;
   });
   setHandler(recordTrainingFundPayment, (personId, reference, paidAt) => {
     try { recordPayment(state, personId, reference, paidAt, new Date().toISOString()); }
-    catch (error) { throw ApplicationFailure.nonRetryable((error as Error).message, 'InvalidDecision'); }
+    catch (error) { throw ApplicationFailure.nonRetryable((error instanceof Error ? error.message : String(error)), 'InvalidDecision'); }
+
     return state;
   });
 
@@ -33,6 +48,7 @@ export async function trainingFundWorkflow(application: TrainingFundApplication,
   await condition(() => state.status !== 'awaiting_approvals');
   await notify(application.applicationId, routing.treasurer, 'treasurer');
   await condition(() => state.status === 'paid');
+
   return state;
 }
 
@@ -42,7 +58,7 @@ const { persistTrainingFundState: persist } = proxyActivities<{ persistTrainingF
 });
 
 async function persistedTrainingFundWorkflow(application: TrainingFundApplication, routing: TrainingFundRouting): Promise<TrainingFundState> {
-  let state = initialTrainingFundState(application, routing);
+  let state = initialTrainingFundState(application, routing, patched('training-fund-majority-v1') ? 'majority' : 'unanimous');
   let initialized = false;
   let decisionTail: Promise<void> = Promise.resolve();
   const workflowId = workflowInfo().workflowId;
@@ -55,17 +71,23 @@ async function persistedTrainingFundWorkflow(application: TrainingFundApplicatio
     const decision = decisionTail.then(async () => {
       await condition(() => initialized);
       const next: TrainingFundState = JSON.parse(JSON.stringify(state));
+
       try { change(next); }
-      catch (error) { throw ApplicationFailure.nonRetryable((error as Error).message, 'InvalidDecision'); }
+      catch (error) { throw ApplicationFailure.nonRetryable((error instanceof Error ? error.message : String(error)), 'InvalidDecision'); }
+
       if (revision(next) !== revision(state)) {
         await persist({ workflowId, revision: revision(next), state: next });
         state = next; // A successful Update now means the database commit completed.
       }
+
       return state;
     });
+
     decisionTail = decision.then(() => undefined, () => undefined);
+
     return decision;
   }
+
   setHandler(approveTrainingFund, personId => decide(next => approve(next, personId, new Date().toISOString())));
   setHandler(recordTrainingFundPayment, (personId, reference, paidAt) => decide(next => recordPayment(next, personId, reference, paidAt, new Date().toISOString())));
 
@@ -76,5 +98,6 @@ async function persistedTrainingFundWorkflow(application: TrainingFundApplicatio
   await notify(application.applicationId, routing.treasurer, 'treasurer');
   await condition(() => state.status === 'paid');
   await condition(allHandlersFinished);
+
   return state;
 }
