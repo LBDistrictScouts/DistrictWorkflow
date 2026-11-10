@@ -1,0 +1,2407 @@
+{
+  "id": "fef78e47-cc60-4598-8b27-1ea4eed0cc53",
+  "prevId": "3a16c7fa-cc38-4cb8-8d54-91acdfb94e2e",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.activity_notification_applications": {
+      "name": "activity_notification_applications",
+      "schema": "",
+      "columns": {
+        "approval_notified_at": {
+          "name": "approval_notified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_message_id": {
+          "name": "approval_message_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "environment": {
+          "name": "environment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submission_id": {
+          "name": "submission_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotence_key": {
+          "name": "idempotence_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submission": {
+          "name": "submission",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "activity_notification_applications_workflow_case_id_workflow_cases_id_fk": {
+          "name": "activity_notification_applications_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "activity_notification_applications",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "activity_notification_applications_workflow_case_id_unique": {
+          "name": "activity_notification_applications_workflow_case_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_case_id"
+          ]
+        },
+        "activity_notification_applications_environment_submission_id_unique": {
+          "name": "activity_notification_applications_environment_submission_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "environment",
+            "submission_id"
+          ]
+        },
+        "activity_notification_applications_environment_idempotence_key_unique": {
+          "name": "activity_notification_applications_environment_idempotence_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "environment",
+            "idempotence_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.activity_notification_statistics": {
+      "name": "activity_notification_statistics",
+      "schema": "",
+      "columns": {
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "environment": {
+          "name": "environment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notification_type": {
+          "name": "notification_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activity": {
+          "name": "activity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "venue_name": {
+          "name": "venue_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_zone": {
+          "name": "time_zone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "groups": {
+          "name": "groups",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sections": {
+          "name": "sections",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_ids": {
+          "name": "section_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_participants": {
+          "name": "section_participants",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "young_people": {
+          "name": "young_people",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "young_leaders": {
+          "name": "young_leaders",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "adults": {
+          "name": "adults",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_provider": {
+          "name": "external_provider",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "activity_statistics_environment_starts_idx": {
+          "name": "activity_statistics_environment_starts_idx",
+          "columns": [
+            {
+              "expression": "environment",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activity_statistics_type_approved_idx": {
+          "name": "activity_statistics_type_approved_idx",
+          "columns": [
+            {
+              "expression": "notification_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "approved_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "activity_notification_statistics_workflow_case_id_workflow_cases_id_fk": {
+          "name": "activity_notification_statistics_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "activity_notification_statistics",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "activity_notification_statistics_approved_by_users_id_fk": {
+          "name": "activity_notification_statistics_approved_by_users_id_fk",
+          "tableFrom": "activity_notification_statistics",
+          "tableTo": "users",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.award_progress": {
+      "name": "award_progress",
+      "schema": "",
+      "columns": {
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role_assignees": {
+          "name": "role_assignees",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'listed'"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "presentation_date": {
+          "name": "presentation_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "schedule_revision": {
+          "name": "schedule_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "award_progress_workflow_case_id_workflow_cases_id_fk": {
+          "name": "award_progress_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "award_progress",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "award_progress_task_id_tasks_id_fk": {
+          "name": "award_progress_task_id_tasks_id_fk",
+          "tableFrom": "award_progress",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "award_stage_valid": {
+          "name": "award_stage_valid",
+          "value": "\"award_progress\".\"stage\" in ('listed', 'received', 'scheduled', 'presented')"
+        },
+        "award_schedule_required": {
+          "name": "award_schedule_required",
+          "value": "\"award_progress\".\"stage\" <> 'scheduled' or \"award_progress\".\"presentation_date\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.award_reminders": {
+      "name": "award_reminders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_revision": {
+          "name": "schedule_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days_before": {
+          "name": "days_before",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'claimed'"
+        },
+        "attempted_at": {
+          "name": "attempted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "award_reminders_task_id_tasks_id_fk": {
+          "name": "award_reminders_task_id_tasks_id_fk",
+          "tableFrom": "award_reminders",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "award_reminders_user_id_users_id_fk": {
+          "name": "award_reminders_user_id_users_id_fk",
+          "tableFrom": "award_reminders",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "award_reminders_task_id_schedule_revision_days_before_user_id_unique": {
+          "name": "award_reminders_task_id_schedule_revision_days_before_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "task_id",
+            "schedule_revision",
+            "days_before",
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.payments": {
+      "name": "payments",
+      "schema": "",
+      "columns": {
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_execution_id": {
+          "name": "workflow_execution_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payee_name": {
+          "name": "payee_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_pence": {
+          "name": "amount_pence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_date": {
+          "name": "transaction_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transaction_reference": {
+          "name": "transaction_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "payments_workflow_case_id_workflow_cases_id_fk": {
+          "name": "payments_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "payments",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payments_workflow_execution_id_workflow_executions_id_fk": {
+          "name": "payments_workflow_execution_id_workflow_executions_id_fk",
+          "tableFrom": "payments",
+          "tableTo": "workflow_executions",
+          "columnsFrom": [
+            "workflow_execution_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payments_recorded_by_users_id_fk": {
+          "name": "payments_recorded_by_users_id_fk",
+          "tableFrom": "payments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "recorded_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "payments_positive_amount": {
+          "name": "payments_positive_amount",
+          "value": "\"payments\".\"amount_pence\" > 0"
+        },
+        "payments_payee_not_blank": {
+          "name": "payments_payee_not_blank",
+          "value": "\"payments\".\"payee_name\" ~ '[^[:space:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.response_requests": {
+      "name": "response_requests",
+      "schema": "",
+      "columns": {
+        "initial_email_sent_at": {
+          "name": "initial_email_sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reminder_attempts": {
+          "name": "reminder_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_reminder_attempt_at": {
+          "name": "last_reminder_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "request": {
+          "name": "request",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answer_ciphertext": {
+          "name": "answer_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_by": {
+          "name": "completed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "response_requests_task_id_tasks_id_fk": {
+          "name": "response_requests_task_id_tasks_id_fk",
+          "tableFrom": "response_requests",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "response_requests_completed_by_users_id_fk": {
+          "name": "response_requests_completed_by_users_id_fk",
+          "tableFrom": "response_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "completed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "response_reminder_limit": {
+          "name": "response_reminder_limit",
+          "value": "\"response_requests\".\"reminder_attempts\" BETWEEN 0 AND 2"
+        },
+        "response_completion_consistent": {
+          "name": "response_completion_consistent",
+          "value": "(\"response_requests\".\"answer_ciphertext\" IS NULL AND \"response_requests\".\"completed_at\" IS NULL AND \"response_requests\".\"completed_by\" IS NULL) OR (\"response_requests\".\"answer_ciphertext\" IS NOT NULL AND \"response_requests\".\"completed_at\" IS NOT NULL AND \"response_requests\".\"completed_by\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.task_payments": {
+      "name": "task_payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_id": {
+          "name": "payment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "task_payments_task_id_tasks_id_fk": {
+          "name": "task_payments_task_id_tasks_id_fk",
+          "tableFrom": "task_payments",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "task_payments_payment_id_payments_id_fk": {
+          "name": "task_payments_payment_id_payments_id_fk",
+          "tableFrom": "task_payments",
+          "tableTo": "payments",
+          "columnsFrom": [
+            "payment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "task_payments_task_id_payment_id_unique": {
+          "name": "task_payments_task_id_payment_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "task_id",
+            "payment_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.task_submissions": {
+      "name": "task_submissions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answers": {
+          "name": "answers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "task_submissions_task_idx": {
+          "name": "task_submissions_task_idx",
+          "columns": [
+            {
+              "expression": "task_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "task_submissions_task_id_tasks_id_fk": {
+          "name": "task_submissions_task_id_tasks_id_fk",
+          "tableFrom": "task_submissions",
+          "tableTo": "tasks",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "task_submissions_submitted_by_users_id_fk": {
+          "name": "task_submissions_submitted_by_users_id_fk",
+          "tableFrom": "task_submissions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "submitted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.task_type_definitions": {
+      "name": "task_type_definitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "task_type_id": {
+          "name": "task_type_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_schema": {
+          "name": "input_schema",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "output_schema": {
+          "name": "output_schema",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ui_schema": {
+          "name": "ui_schema",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "task_type_definitions_task_type_id_task_types_id_fk": {
+          "name": "task_type_definitions_task_type_id_task_types_id_fk",
+          "tableFrom": "task_type_definitions",
+          "tableTo": "task_types",
+          "columnsFrom": [
+            "task_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "task_type_definitions_task_type_id_version_unique": {
+          "name": "task_type_definitions_task_type_id_version_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "task_type_id",
+            "version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "task_type_definition_positive_version": {
+          "name": "task_type_definition_positive_version",
+          "value": "\"task_type_definitions\".\"version\" > 0"
+        },
+        "task_type_definition_schema_objects": {
+          "name": "task_type_definition_schema_objects",
+          "value": "jsonb_typeof(\"task_type_definitions\".\"input_schema\") = 'object' AND jsonb_typeof(\"task_type_definitions\".\"output_schema\") = 'object' AND jsonb_typeof(\"task_type_definitions\".\"ui_schema\") = 'object'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.task_types": {
+      "name": "task_types",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "task_types_code_unique": {
+          "name": "task_types_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "task_types_code_format": {
+          "name": "task_types_code_format",
+          "value": "\"task_types\".\"code\" ~ '^[A-Za-z0-9-]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tasks": {
+      "name": "tasks",
+      "schema": "",
+      "columns": {
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assigned_user_id": {
+          "name": "assigned_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_execution_id": {
+          "name": "workflow_execution_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_step_id": {
+          "name": "workflow_step_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrence": {
+          "name": "occurrence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "user_tag_id": {
+          "name": "user_tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "context": {
+          "name": "context",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "draft_answers": {
+          "name": "draft_answers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "task_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_by": {
+          "name": "completed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "audit_notes": {
+          "name": "audit_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "tasks_tag_status_idx": {
+          "name": "tasks_tag_status_idx",
+          "columns": [
+            {
+              "expression": "user_tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tasks_workflow_case_id_workflow_cases_id_fk": {
+          "name": "tasks_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_assigned_user_id_users_id_fk": {
+          "name": "tasks_assigned_user_id_users_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "assigned_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_workflow_execution_id_workflow_executions_id_fk": {
+          "name": "tasks_workflow_execution_id_workflow_executions_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "workflow_executions",
+          "columnsFrom": [
+            "workflow_execution_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_workflow_step_id_workflow_steps_id_fk": {
+          "name": "tasks_workflow_step_id_workflow_steps_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "workflow_steps",
+          "columnsFrom": [
+            "workflow_step_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_user_tag_id_user_tags_id_fk": {
+          "name": "tasks_user_tag_id_user_tags_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "user_tags",
+          "columnsFrom": [
+            "user_tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_created_by_users_id_fk": {
+          "name": "tasks_created_by_users_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_updated_by_users_id_fk": {
+          "name": "tasks_updated_by_users_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tasks_completed_by_users_id_fk": {
+          "name": "tasks_completed_by_users_id_fk",
+          "tableFrom": "tasks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "completed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tasks_workflow_execution_id_workflow_step_id_occurrence_unique": {
+          "name": "tasks_workflow_execution_id_workflow_step_id_occurrence_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_execution_id",
+            "workflow_step_id",
+            "occurrence"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tasks_positive_occurrence": {
+          "name": "tasks_positive_occurrence",
+          "value": "\"tasks\".\"occurrence\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.training_fund_applications": {
+      "name": "training_fund_applications",
+      "schema": "",
+      "columns": {
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "applicant_user_id": {
+          "name": "applicant_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "training_fund_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "training_fund_status_submitted_idx": {
+          "name": "training_fund_status_submitted_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submitted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "training_fund_applications_workflow_case_id_workflow_cases_id_fk": {
+          "name": "training_fund_applications_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "training_fund_applications",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "training_fund_applications_applicant_user_id_users_id_fk": {
+          "name": "training_fund_applications_applicant_user_id_users_id_fk",
+          "tableFrom": "training_fund_applications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "applicant_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "training_fund_applications_workflow_id_unique": {
+          "name": "training_fund_applications_workflow_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "training_fund_applicant_user_matches": {
+          "name": "training_fund_applicant_user_matches",
+          "value": "\"training_fund_applications\".\"applicant_user_id\" IS NOT DISTINCT FROM (\"training_fund_applications\".\"state\"->'application'->'applicant'->>'userId')::uuid"
+        },
+        "training_fund_revision_nonnegative": {
+          "name": "training_fund_revision_nonnegative",
+          "value": "\"training_fund_applications\".\"revision\" >= 0"
+        },
+        "training_fund_state_id_matches": {
+          "name": "training_fund_state_id_matches",
+          "value": "(\"training_fund_applications\".\"state\"->'application'->>'applicationId')::uuid = \"training_fund_applications\".\"application_id\""
+        },
+        "training_fund_state_status_matches": {
+          "name": "training_fund_state_status_matches",
+          "value": "\"training_fund_applications\".\"state\"->>'status' = \"training_fund_applications\".\"status\"::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.training_fund_transitions": {
+      "name": "training_fund_transitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "training_fund_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "training_fund_transitions_application_id_training_fund_applications_application_id_fk": {
+          "name": "training_fund_transitions_application_id_training_fund_applications_application_id_fk",
+          "tableFrom": "training_fund_transitions",
+          "tableTo": "training_fund_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "application_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "training_fund_transitions_application_id_revision_unique": {
+          "name": "training_fund_transitions_application_id_revision_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "application_id",
+            "revision"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "training_fund_transition_revision_nonnegative": {
+          "name": "training_fund_transition_revision_nonnegative",
+          "value": "\"training_fund_transitions\".\"revision\" >= 0"
+        },
+        "training_fund_transition_state_id_matches": {
+          "name": "training_fund_transition_state_id_matches",
+          "value": "(\"training_fund_transitions\".\"state\"->'application'->>'applicationId')::uuid = \"training_fund_transitions\".\"application_id\""
+        },
+        "training_fund_transition_state_status_matches": {
+          "name": "training_fund_transition_state_status_matches",
+          "value": "\"training_fund_transitions\".\"state\"->>'status' = \"training_fund_transitions\".\"status\"::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_emails": {
+      "name": "user_emails",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "user_emails_email_idx": {
+          "name": "user_emails_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_emails_user_id_users_id_fk": {
+          "name": "user_emails_user_id_users_id_fk",
+          "tableFrom": "user_emails",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_emails_user_id_email_unique": {
+          "name": "user_emails_user_id_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_profiles": {
+      "name": "user_profiles",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "task_response_preference": {
+          "name": "task_response_preference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'response-links'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_profiles_user_id_users_id_fk": {
+          "name": "user_profiles_user_id_users_id_fk",
+          "tableFrom": "user_profiles",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "user_profiles_display_name_valid": {
+          "name": "user_profiles_display_name_valid",
+          "value": "\"user_profiles\".\"display_name\" IS NULL OR (length(\"user_profiles\".\"display_name\") BETWEEN 1 AND 200 AND \"user_profiles\".\"display_name\" !~ E'[\\r\\n]')"
+        },
+        "user_profiles_response_preference_valid": {
+          "name": "user_profiles_response_preference_valid",
+          "value": "\"user_profiles\".\"task_response_preference\" IN ('response-links', 'task-notification')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_tag_memberships": {
+      "name": "user_tag_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_email_id": {
+          "name": "user_email_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_tag_id": {
+          "name": "user_tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "user_tag_memberships_tag_idx": {
+          "name": "user_tag_memberships_tag_idx",
+          "columns": [
+            {
+              "expression": "user_tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_tag_memberships_user_email_id_user_emails_id_fk": {
+          "name": "user_tag_memberships_user_email_id_user_emails_id_fk",
+          "tableFrom": "user_tag_memberships",
+          "tableTo": "user_emails",
+          "columnsFrom": [
+            "user_email_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_tag_memberships_user_tag_id_user_tags_id_fk": {
+          "name": "user_tag_memberships_user_tag_id_user_tags_id_fk",
+          "tableFrom": "user_tag_memberships",
+          "tableTo": "user_tags",
+          "columnsFrom": [
+            "user_tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_tag_memberships_user_email_id_user_tag_id_unique": {
+          "name": "user_tag_memberships_user_email_id_user_tag_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_email_id",
+            "user_tag_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_tags": {
+      "name": "user_tags",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tag_name": {
+          "name": "tag_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_code": {
+          "name": "tag_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_tags_tag_code_unique": {
+          "name": "user_tags_tag_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tag_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "user_tags_name_not_blank": {
+          "name": "user_tags_name_not_blank",
+          "value": "\"user_tags\".\"tag_name\" ~ '[^[:space:]]'"
+        },
+        "user_tags_code_format": {
+          "name": "user_tags_code_format",
+          "value": "\"user_tags\".\"tag_code\" ~ '^[A-Za-z0-9-]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "synced_at": {
+          "name": "synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.workflow_case_executions": {
+      "name": "workflow_case_executions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_case_id": {
+          "name": "workflow_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_execution_id": {
+          "name": "workflow_execution_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_case_executions_workflow_case_id_workflow_cases_id_fk": {
+          "name": "workflow_case_executions_workflow_case_id_workflow_cases_id_fk",
+          "tableFrom": "workflow_case_executions",
+          "tableTo": "workflow_cases",
+          "columnsFrom": [
+            "workflow_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflow_case_executions_workflow_execution_id_workflow_executions_id_fk": {
+          "name": "workflow_case_executions_workflow_execution_id_workflow_executions_id_fk",
+          "tableFrom": "workflow_case_executions",
+          "tableTo": "workflow_executions",
+          "columnsFrom": [
+            "workflow_execution_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflow_case_executions_workflow_case_id_workflow_execution_id_unique": {
+          "name": "workflow_case_executions_workflow_case_id_workflow_execution_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_case_id",
+            "workflow_execution_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.workflow_cases": {
+      "name": "workflow_cases",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_definition_id": {
+          "name": "workflow_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "workflow_cases_status_idx": {
+          "name": "workflow_cases_status_idx",
+          "columns": [
+            {
+              "expression": "workflow_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workflow_cases_workflow_id_workflows_id_fk": {
+          "name": "workflow_cases_workflow_id_workflows_id_fk",
+          "tableFrom": "workflow_cases",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflow_cases_workflow_definition_id_workflow_definitions_id_fk": {
+          "name": "workflow_cases_workflow_definition_id_workflow_definitions_id_fk",
+          "tableFrom": "workflow_cases",
+          "tableTo": "workflow_definitions",
+          "columnsFrom": [
+            "workflow_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflow_cases_workflow_id_reference_unique": {
+          "name": "workflow_cases_workflow_id_reference_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_id",
+            "reference"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "workflow_cases_status_valid": {
+          "name": "workflow_cases_status_valid",
+          "value": "\"workflow_cases\".\"status\" in ('open', 'completed', 'cancelled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workflow_definitions": {
+      "name": "workflow_definitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_definitions_workflow_id_workflows_id_fk": {
+          "name": "workflow_definitions_workflow_id_workflows_id_fk",
+          "tableFrom": "workflow_definitions",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflow_definitions_workflow_id_version_unique": {
+          "name": "workflow_definitions_workflow_id_version_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_id",
+            "version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "workflow_definition_positive_version": {
+          "name": "workflow_definition_positive_version",
+          "value": "\"workflow_definitions\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workflow_executions": {
+      "name": "workflow_executions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_definition_id": {
+          "name": "workflow_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "namespace": {
+          "name": "namespace",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "temporal_workflow_id": {
+          "name": "temporal_workflow_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "temporal_run_id": {
+          "name": "temporal_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_execution_run_id": {
+          "name": "first_execution_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "workflow_execution_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'running'"
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_executions_workflow_definition_id_workflow_definitions_id_fk": {
+          "name": "workflow_executions_workflow_definition_id_workflow_definitions_id_fk",
+          "tableFrom": "workflow_executions",
+          "tableTo": "workflow_definitions",
+          "columnsFrom": [
+            "workflow_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflow_executions_namespace_temporal_workflow_id_temporal_run_id_unique": {
+          "name": "workflow_executions_namespace_temporal_workflow_id_temporal_run_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "namespace",
+            "temporal_workflow_id",
+            "temporal_run_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "execution_identity_not_blank": {
+          "name": "execution_identity_not_blank",
+          "value": "\"workflow_executions\".\"namespace\" ~ '[^[:space:]]' AND \"workflow_executions\".\"temporal_workflow_id\" ~ '[^[:space:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workflow_steps": {
+      "name": "workflow_steps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workflow_definition_id": {
+          "name": "workflow_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "task_type_definition_id": {
+          "name": "task_type_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step_code": {
+          "name": "step_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_tag_id": {
+          "name": "user_tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_steps_workflow_definition_id_workflow_definitions_id_fk": {
+          "name": "workflow_steps_workflow_definition_id_workflow_definitions_id_fk",
+          "tableFrom": "workflow_steps",
+          "tableTo": "workflow_definitions",
+          "columnsFrom": [
+            "workflow_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflow_steps_task_type_definition_id_task_type_definitions_id_fk": {
+          "name": "workflow_steps_task_type_definition_id_task_type_definitions_id_fk",
+          "tableFrom": "workflow_steps",
+          "tableTo": "task_type_definitions",
+          "columnsFrom": [
+            "task_type_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflow_steps_user_tag_id_user_tags_id_fk": {
+          "name": "workflow_steps_user_tag_id_user_tags_id_fk",
+          "tableFrom": "workflow_steps",
+          "tableTo": "user_tags",
+          "columnsFrom": [
+            "user_tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflow_steps_workflow_definition_id_step_code_unique": {
+          "name": "workflow_steps_workflow_definition_id_step_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workflow_definition_id",
+            "step_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "workflow_steps_code_format": {
+          "name": "workflow_steps_code_format",
+          "value": "\"workflow_steps\".\"step_code\" ~ '^[A-Za-z0-9-]+$'"
+        },
+        "workflow_steps_text_not_blank": {
+          "name": "workflow_steps_text_not_blank",
+          "value": "\"workflow_steps\".\"name\" ~ '[^[:space:]]' AND \"workflow_steps\".\"description\" ~ '[^[:space:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workflows": {
+      "name": "workflows",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "temporal_workflow_type": {
+          "name": "temporal_workflow_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workflows_code_unique": {
+          "name": "workflows_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "workflows_code_format": {
+          "name": "workflows_code_format",
+          "value": "\"workflows\".\"code\" ~ '^[A-Za-z0-9-]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.task_status": {
+      "name": "task_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "in_progress",
+        "completed"
+      ]
+    },
+    "public.training_fund_status": {
+      "name": "training_fund_status",
+      "schema": "public",
+      "values": [
+        "awaiting_approvals",
+        "awaiting_payment",
+        "paid"
+      ]
+    },
+    "public.workflow_execution_status": {
+      "name": "workflow_execution_status",
+      "schema": "public",
+      "values": [
+        "running",
+        "completed",
+        "failed",
+        "canceled",
+        "terminated",
+        "continued_as_new",
+        "timed_out"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -1,0 +1,13 @@
+import type { QueuedActivityNotification } from '@district/contracts/activity-notification/types';
+
+export const submission: QueuedActivityNotification = {
+  schemaVersion: 1, submissionId: 'submission-1', environment: 'test', submittedAt: '2026-11-09T12:00:00.000Z', submittedBy: 'member-1', formType: 'activity-notification',
+  authenticatedSubmitter: { subject: 'member-1', issuer: 'https://identity.example', authenticatedAt: '2026-11-09T11:00:00Z' },
+  files: [{ kind: 'riskAssessment', name: 'risk.pdf', size: 100, sha256: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', bucket: 'uploads', key: 'risk.pdf', versionId: 'v1' }],
+  notification: {
+    idempotenceKey: '12345678-1234-4123-8123-123456789abc', activity: 'Hiking', location: 'Surrey', venueName: 'Camp', leaderName: 'Leader', timeZone: 'Europe/London', notificationType: 'out-of-district',
+    startsAt: '2026-12-01T10:00:00.000Z', endsAt: '2026-12-01T16:00:00.000Z', sectionIds: [1], sectionParticipants: [{ sectionId: 1, youngPeople: 10 }], youngPeople: 10, youngLeaders: 0, adults: 2,
+    leaders: [{ id: '1', memberId: 'member-1', name: 'Leader', email: 'leader@example.org', phone: '+44 7123 456789', inCharge: true }, { id: '2', memberId: 'member-2', name: 'Helper', email: '', phone: '', inCharge: false }],
+    memberId: 'member-1', email: 'leader@example.org', phone: '+44 7123 456789', notes: '', declaration: true, groups: ['Group'], sections: ['Scouts'], adultTraining: 'Yes', trainedLeader: 'Yes', authorised: 'Yes',
+  },
+};

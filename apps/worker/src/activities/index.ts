@@ -23,3 +23,7 @@ export { listDueResponseReminders, sendResponseReminder } from './email-notifica
 export { initializeAwards, createAwardTask, finishAwardsIfComplete } from './awards';
 
 export { listDueAwardReminders, wakeCompletedAwardImports, sendAwardReminder } from './email-notifications/award-reminders';
+
+export { receiveActivityNotification, acknowledgeActivityNotification, recordActivityNotification, initializeActivityApproval, finishActivityIfApproved } from './activity-notification';
+
+export { notifyActivityApprovalApplicant } from './email-notifications/activity-notification';

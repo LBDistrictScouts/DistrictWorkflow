@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Queued activity notification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "submissionId",
+    "environment",
+    "submittedAt",
+    "submittedBy",
+    "notification",
+    "files",
+    "formType",
+    "authenticatedSubmitter"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "submissionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S"
+    },
+    "environment": {
+      "enum": [
+        "dev",
+        "test",
+        "prod"
+      ]
+    },
+    "submittedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "\\S"
+    },
+    "submittedBy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S"
+    },
+    "notification": {
+      "$ref": "activity-notification.schema.json"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "name",
+          "size",
+          "sha256",
+          "bucket",
+          "key",
+          "versionId"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "riskAssessment",
+              "providerInsurance",
+              "providerWaiver"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "\\S"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 104857600
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]{43}=$"
+          },
+          "bucket": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "pattern": "\\S"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          },
+          "versionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "formType": {
+      "const": "activity-notification"
+    },
+    "authenticatedSubmitter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "issuer",
+        "authenticatedAt"
+      ],
+      "description": "Identity derived server-side from the verified session JWT. Raw JWTs are never queued.",
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authenticatedAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 254
+        },
+        "emailVerified": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

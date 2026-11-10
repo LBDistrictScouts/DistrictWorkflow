@@ -1,4 +1,4 @@
-export type TaskReference = { kind: 'award'; id: string } | { kind: 'training-fund'; token: string } | { kind: 'response'; token: string; choice: string };
+export type TaskReference = { kind: 'award'; id: string } | { kind: 'activity'; id: string } | { kind: 'training-fund'; token: string } | { kind: 'response'; token: string; choice: string };
 
 export function taskReference(href: string, origin: string): TaskReference | null {
   const url = new URL(href, origin);
@@ -7,6 +7,8 @@ export function taskReference(href: string, origin: string): TaskReference | nul
   const award = /^#task-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.exec(url.hash);
 
   if (award && ['/workflows/awards', '/workflows/awards/tasks'].includes(url.pathname)) return { kind: 'award', id: award[1] };
+
+  if (award && ['/workflows/activity-notification', '/workflows/activity-notification/tasks'].includes(url.pathname)) return { kind: 'activity', id: award[1] };
   const params = new URLSearchParams(url.hash.slice(1)); const token = params.get('token');
 
   if (!token) return null;

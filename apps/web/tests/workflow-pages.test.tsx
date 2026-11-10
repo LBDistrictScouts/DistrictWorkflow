@@ -50,6 +50,8 @@ test('all task entry points resolve to a single modal reference, excluding exter
   const id = '550e8400-e29b-41d4-a716-446655440000';
 
   for (const path of ['/workflows/awards', '/workflows/awards/tasks']) assert.deepEqual(taskReference(`${path}#task-${id}`, origin), { kind: 'award', id });
+  assert.deepEqual(taskReference(`/workflows/activity-notification/tasks#task-${id}`, origin), { kind: 'activity', id });
+  assert.equal(taskReference(`https://other.example.org/workflows/activity-notification/tasks#task-${id}`, origin), null);
   assert.deepEqual(taskReference('/tasks#token=capability', origin), { kind: 'training-fund', token: 'capability' });
   assert.deepEqual(taskReference('/responses#token=capability&choice=yes', origin), { kind: 'response', token: 'capability', choice: 'yes' });
   assert.equal(taskReference(`https://other.example.org/workflows/awards/tasks#task-${id}`, origin), null);
@@ -83,4 +85,16 @@ test('awards import diagram connects row processing and task completion with dis
     assert.ok(target.startsWith('awards-import-flow-'));
     assert.ok(html.includes(`id="${target}"`));
   }
+});
+
+
+test('Activity Approvals uses the workflow template with case metrics and three subpages', () => {
+  const html = renderToStaticMarkup(createElement(WorkflowDetail, { slug: 'activity-notification', name: 'Activity Approvals', description: 'Review activity notifications', summary: { total: 3, open: 2, completed: 1, cancelled: 0 }, unavailable: false }));
+
+  for (const page of ['form', 'definition', 'tasks']) assert.ok(html.includes(`/workflows/activity-notification/${page}`));
+  assert.match(html, /Activity notifications<\/dt><dd>3/);
+  assert.match(html, /Open<\/dt><dd>2/);
+  assert.match(html, /Completed<\/dt><dd>1/);
+  assert.match(html, /Cancelled<\/dt><dd>0/);
+  assert.ok(!html.includes('Awards'));
 });

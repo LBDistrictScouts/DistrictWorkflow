@@ -1,4 +1,4 @@
-import { awardsRepository } from '@district/persistence/runtime';
+import { activityNotificationRepository, awardsRepository } from '@district/persistence/runtime';
 import { verifyUserSession } from '@/lib/current-user';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
@@ -19,10 +19,11 @@ export default async function ActionsPage() {
   const email = identity.email;
   let actions: Awaited<ReturnType<typeof trainingFundActions>> = [];
   let awardTasks: Awaited<ReturnType<ReturnType<typeof awardsRepository>['list']>> = [];
+  let activityTasks: Awaited<ReturnType<ReturnType<typeof activityNotificationRepository>['list']>> = [];
   let unavailable = false;
 
   if (email) {
-    try { [actions, awardTasks] = await Promise.all([trainingFundActions(email), awardsRepository().list(identity.userId)]); }
+    try { [actions, awardTasks, activityTasks] = await Promise.all([trainingFundActions(email), awardsRepository().list(identity.userId), activityNotificationRepository().list(identity.userId)]); }
     catch { unavailable = true; }
   }
 
@@ -32,10 +33,10 @@ export default async function ActionsPage() {
       <div className="section-heading"><div><p className="eyebrow">Your next steps</p><h2 id="actions-heading">Available actions</h2></div><a className="text-link" href="/actions">Refresh actions</a></div>
       {!email ? <div className="empty-state"><h3>Email required</h3><p>Your account needs an email address to match workflow assignments. Contact the district administrator to check your account.</p></div>
         : unavailable ? <div className="empty-state" role="alert"><h3>Actions are temporarily unavailable</h3><p>We couldn’t load your tasks. Please refresh to try again.</p></div>
-        : actions.length === 0 && awardTasks.length === 0 ? <div className="empty-state"><h3>You’re all caught up</h3><p>There are no workflow tasks waiting for you. Tasks appear here when they are assigned to your account’s email address.</p></div>
+        : actions.length === 0 && awardTasks.length === 0 && activityTasks.length === 0 ? <div className="empty-state"><h3>You’re all caught up</h3><p>There are no workflow tasks waiting for you. Tasks appear here when they are assigned to your account’s email address.</p></div>
         : <div className="card-grid">{actions.map(action => <a key={action.id} className="card featured-card" href={action.href}>
           <span className="eyebrow">District Training Fund</span><h3>{action.title}</h3><p>{action.applicant} · {action.course}</p><p>Submitted {new Date(action.submittedAt).toLocaleDateString('en-GB')}</p><span className="card-action">Open task <span aria-hidden="true">→</span></span>
-        </a>)}{awardTasks.map(task => <a key={task.id} className="card featured-card" href={`/workflows/awards/tasks#task-${task.id}`}><span className="eyebrow">Awards</span><h3>Present Award</h3><p>{task.context.recipient.name} · {task.context.description}</p><p>No deadline</p><span className="card-action">Open task →</span></a>)}</div>}
+        </a>)}{awardTasks.map(task => <a key={task.id} className="card featured-card" href={`/workflows/awards/tasks#task-${task.id}`}><span className="eyebrow">Awards</span><h3>Present Award</h3><p>{task.context.recipient.name} · {task.context.description}</p><p>No deadline</p><span className="card-action">Open task →</span></a>)}{activityTasks.map(({ task, submission }) => <a key={task.id} className="card featured-card" href={`/workflows/activity-notification/tasks#task-${task.id}`}><span className="eyebrow">Activity notifications</span><h3>Approve activity notification</h3><p>{submission.notification.activity} · {submission.notification.venueName}</p><span className="card-action">Open task →</span></a>)}</div>}
     </section>
   </div>;
 }

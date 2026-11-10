@@ -19,6 +19,10 @@ export function createWorkflowOverviewRepository(db: ReturnType<typeof createDat
             (t.assigned_user_id is null and exists(select 1 from jsonb_array_elements(a.role_assignees) p where p->>'id'=${userId})) or
             exists(select 1 from user_tag_memberships m join user_emails e on e.id=m.user_email_id join user_tags tag on tag.id=m.user_tag_id where e.user_id=${userId}::uuid and tag.tag_code='DLV')
           )
+        )) and (${slug} <> 'activity-notification' or exists (
+          select 1 from user_tag_memberships m join user_emails e on e.id=m.user_email_id
+          join users u on u.id=e.user_id join user_tags tag on tag.id=m.user_tag_id
+          where u.id=${userId}::uuid and u.active=1 and tag.tag_code='activity-out-of-district'
         ))`);
 
       // SAFETY: The aggregate SELECT always returns one row with these four aliases explicitly cast to PostgreSQL int.

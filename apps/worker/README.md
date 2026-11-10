@@ -51,3 +51,8 @@ outstanding assignee. `email:preview` renders fictional samples under
 New consumer starts persist Training Fund decisions through database activities.
 Configure `DATABASE_URL` and apply [database migrations](../../packages/persistence/README.md)
 before enabling intake. Existing two-argument workflows retain their original behavior.
+
+Activity notification intake is owned by Temporal. Start the worker, then run
+`corepack yarn activity-notification:consume` once to launch the durable polling
+workflow. Each case receives a shared first-approval task for members of
+`activity-out-of-district`. See [activity notification operations](../../docs/activity-notification.md).

@@ -274,3 +274,41 @@ export const workflowCaseExecutions = pgTable('workflow_case_executions', {
   workflowCaseId: uuid('workflow_case_id').notNull().references(() => workflowCases.id),
   workflowExecutionId: uuid('workflow_execution_id').notNull().references(() => workflowExecutions.id),
 }, table => [unique().on(table.workflowCaseId, table.workflowExecutionId)]);
+
+export const activityNotificationApplications = pgTable('activity_notification_applications', {
+  approvalNotifiedAt: timestamp('approval_notified_at', { withTimezone: true }),
+  approvalMessageId: text('approval_message_id'),
+  id: uuid('id').defaultRandom().primaryKey(),
+  workflowCaseId: uuid('workflow_case_id').notNull().unique().references(() => workflowCases.id),
+  environment: text('environment').notNull(),
+  submissionId: text('submission_id').notNull(),
+  idempotenceKey: uuid('idempotence_key').notNull(),
+  submission: jsonb('submission').$type<import('@district/contracts/activity-notification/types').QueuedActivityNotification>().notNull(),
+}, table => [unique().on(table.environment, table.submissionId), unique().on(table.environment, table.idempotenceKey)]);
+
+
+// One durable reporting snapshot per approved case; contact details remain in the linked application.
+export const activityNotificationStatistics = pgTable('activity_notification_statistics', {
+  workflowCaseId: uuid('workflow_case_id').primaryKey().references(() => workflowCases.id),
+  environment: text('environment').notNull(),
+  notificationType: text('notification_type').$type<'out-of-district' | 'adventurous' | 'both'>().notNull(),
+  activity: text('activity').notNull(),
+  location: text('location').notNull(),
+  venueName: text('venue_name').notNull(),
+  timeZone: text('time_zone').notNull(),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull(),
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+  approvedAt: timestamp('approved_at', { withTimezone: true }).notNull(),
+  approvedBy: uuid('approved_by').notNull().references(() => users.id),
+  groups: jsonb('groups').$type<string[]>().notNull(),
+  sections: jsonb('sections').$type<string[]>().notNull(),
+  sectionIds: jsonb('section_ids').$type<number[]>().notNull(),
+  sectionParticipants: jsonb('section_participants').$type<{ sectionId: number; youngPeople: number }[]>().notNull(),
+  youngPeople: integer('young_people').notNull(),
+  youngLeaders: integer('young_leaders').notNull(),
+  adults: integer('adults').notNull(),
+  externalProvider: integer('external_provider'),
+}, table => [index('activity_statistics_environment_starts_idx').on(table.environment, table.startsAt),
+  index('activity_statistics_type_approved_idx').on(table.notificationType, table.approvedAt),
+]);

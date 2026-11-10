@@ -13,3 +13,5 @@ export { responseRemindersWorkflow } from './response-reminders';
 export { awardsWorkflow } from './awards';
 
 export { awardRemindersWorkflow } from './award-reminders';
+
+export { activityNotificationIntakeWorkflow, activityNotificationWorkflow } from './activity-notification';

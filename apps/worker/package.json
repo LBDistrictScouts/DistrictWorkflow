@@ -24,7 +24,8 @@
     "tasks:schedule": "tsx src/commands/schedule-task-digest.ts",
     "members:schedule": "tsx src/commands/schedule-member-sync.ts",
     "test:aws:local": "node --import tsx --test tests/training-fund.local-aws.ts",
-    "awards:schedule": "tsx src/commands/schedule-award-reminders.ts"
+    "awards:schedule": "tsx src/commands/schedule-award-reminders.ts",
+    "activity-notification:consume": "tsx src/intake/activity-notification.ts"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.0.0",

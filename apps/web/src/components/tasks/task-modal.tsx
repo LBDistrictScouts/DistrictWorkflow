@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { taskReference, type TaskReference } from '@/lib/task-reference';
 import AwardTask from './award-task';
+import ActivityTask from './activity-task';
 import TaskPanel from '../training-fund/task-panel';
 import ResponseForm from '../response-form';
 
@@ -21,7 +22,7 @@ export default function TaskModal() {
         setTask(reference);
 
         // Email capabilities stay only in memory once opened.
-        if (reference.kind !== 'award') window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+        if (reference.kind === 'training-fund' || reference.kind === 'response') window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
       }
     };
 
@@ -50,12 +51,12 @@ export default function TaskModal() {
   }, [task]);
 
   if (!task) return null;
-  const key = task.kind === 'award' ? task.id : task.token;
+  const key = task.kind === 'award' || task.kind === 'activity' ? task.id : task.token;
 
   return <dialog ref={dialog} className="task-modal" aria-labelledby="task-modal-title" onClose={() => { if (!dialog.current?.open) setTask(null); }} onClick={event => { if (event.target === event.currentTarget) { const r = event.currentTarget.getBoundingClientRect();
 
  if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) event.currentTarget.close(); } }}>
-    <header className="task-modal-header"><div><p className="eyebrow">District workflow task</p><h2 id="task-modal-title">{task.kind === 'award' ? 'Present Award' : task.kind === 'training-fund' ? 'Training Fund task' : 'Your response'}</h2></div><button type="button" aria-label="Close task" onClick={() => dialog.current?.close()}>Close ×</button></header>
-    <div className="task-modal-body">{task.kind === 'award' ? <AwardTask key={key} taskId={task.id} onChanged={changed} /> : task.kind === 'training-fund' ? <TaskPanel key={key} taskToken={task.token} onChanged={changed} /> : <ResponseForm key={key} taskToken={task.token} initialChoice={task.choice} onChanged={changed} />}</div>
+    <header className="task-modal-header"><div><p className="eyebrow">District workflow task</p><h2 id="task-modal-title">{task.kind === 'award' ? 'Present Award' : task.kind === 'activity' ? 'Approve activity notification' : task.kind === 'training-fund' ? 'Training Fund task' : 'Your response'}</h2></div><button type="button" aria-label="Close task" onClick={() => dialog.current?.close()}>Close ×</button></header>
+    <div className="task-modal-body">{task.kind === 'award' ? <AwardTask key={key} taskId={task.id} onChanged={changed} /> : task.kind === 'activity' ? <ActivityTask key={key} taskId={task.id} onChanged={changed} /> : task.kind === 'training-fund' ? <TaskPanel key={key} taskToken={task.token} onChanged={changed} /> : <ResponseForm key={key} taskToken={task.token} initialChoice={task.choice} onChanged={changed} />}</div>
   </dialog>;
 }
